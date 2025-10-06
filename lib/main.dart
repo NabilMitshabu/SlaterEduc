@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
   final GoRouter router;
   const MyApp({super.key, required this.router});
 
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
