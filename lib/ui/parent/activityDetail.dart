@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:slatereduc/services/app_colors.dart';
+import 'historique_punitions.dart';
 import 'resultat.dart';
+import 'historique_paiement.dart';
 
 
 class ActiviteDetailsScreen extends StatefulWidget {
@@ -131,13 +133,28 @@ class _ActiviteDetailsScreenState extends State<ActiviteDetailsScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Solde de Frais", style: TextStyle(fontWeight: FontWeight.bold)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const Text("Solde de Frais", style: TextStyle(fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.history, color: Colors.blue),
+                      tooltip: 'Historique paiement',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const HistoriquePaiementScreen()),
+                        );
+                      },
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 5),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
-                    Text("250\$"),
-                    Text("900\$"),
+                    Text("250"),
+                    Text("900"),
                   ],
                 ),
                 const SizedBox(height: 5),
@@ -247,6 +264,17 @@ class _ActiviteDetailsScreenState extends State<ActiviteDetailsScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoriquePunitionsScreen()),
+                );
+              },
+              child: const Text("Historique des activités"),
+            )
           ],
         ),
       ),
