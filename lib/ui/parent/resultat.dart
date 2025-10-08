@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:slatereduc/services/app_colors.dart';
 
 class ResultatCompletScreen extends StatefulWidget {
   const ResultatCompletScreen({super.key});
@@ -16,7 +17,6 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
     "3ème Période",
   ];
 
-  // Exemple de résultats par période
   final Map<String, List<Map<String, dynamic>>> resultatsParPeriode = {
     "1ère Période": [
       {
@@ -61,31 +61,33 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bleu = const Color(0xFF1B54F5);
+    final bleu = AppColors.primary(context);
+    final background = AppColors.background(context);
+    final textColor = AppColors.text(context);
+
     final resultats = resultatsParPeriode[periodes[selectedIndex]] ?? [];
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: background,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: bleu),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Résultat complet",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: background,
       body: Stack(
         children: [
           SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             child: Column(
               children: [
-                // Liste des périodes scrollable horizontalement
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -95,7 +97,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            backgroundColor: selected ? bleu : Colors.white,
+                            backgroundColor: selected ? bleu : background,
                             foregroundColor: selected ? Colors.white : bleu,
                             side: BorderSide(color: bleu, width: 1.5),
                             shape: RoundedRectangleBorder(
@@ -103,8 +105,10 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                             ),
                           ),
                           onPressed: () => setState(() => selectedIndex = i),
-                          child: Text(periodes[i],
-                              style: const TextStyle(fontWeight: FontWeight.w600)),
+                          child: Text(
+                            periodes[i],
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
                         ),
                       );
                     }),
@@ -115,7 +119,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                 // Tableau principal des cours
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: background,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: bleu.withOpacity(0.18)),
                     boxShadow: [
@@ -138,19 +142,29 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                     children: [
                       TableRow(
                         decoration: BoxDecoration(color: bleu.withOpacity(0.08)),
-                        children: const [
+                        children: [
                           Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Center(
-                              child: Text("Cours",
-                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                              child: Text(
+                                "Cours",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                              ),
                             ),
                           ),
                           Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Center(
-                              child: Text("Points Obtenus",
-                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                              child: Text(
+                                "Points Obtenus",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -165,7 +179,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                                   vertical: 8, horizontal: 4),
                               child: Text(
                                 r["cours"],
-                                style: const TextStyle(fontSize: 15),
+                                style: TextStyle(fontSize: 15, color: textColor),
                               ),
                             ),
                           ),
@@ -176,7 +190,9 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                               child: Text(
                                 r["points"],
                                 style: TextStyle(
-                                    color: bleu, fontWeight: FontWeight.bold),
+                                  color: bleu,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -185,7 +201,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 80), // Pour laisser la place au bouton en bas
+                const SizedBox(height: 80),
               ],
             ),
           ),
@@ -198,16 +214,19 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: bleu,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
                   elevation: 2,
                 ),
                 icon: const Icon(Icons.download_rounded),
-                label: const Text('Télécharger', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                label: const Text(
+                  'Télécharger',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
                 onPressed: () {
-                  // TODO: Ajouter la logique de téléchargement du résultat
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Téléchargement en cours...')),
                   );
@@ -220,15 +239,16 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
     );
   }
 
-  // Fonction pour afficher la BottomSheet
   void _showEvaluationsSheet(
       BuildContext context, String cours, List<dynamic> evaluations) {
-    final bleu = const Color(0xFF1B54F5);
+    final bleu = AppColors.primary(context);
+    final background = AppColors.background(context);
+    final textColor = AppColors.text(context);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -248,7 +268,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: Colors.grey[400],
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -279,26 +299,38 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                     children: [
                       TableRow(
                         decoration: BoxDecoration(color: bleu.withOpacity(0.08)),
-                        children: const [
+                        children: [
                           Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Center(
-                              child: Text("Type d’évaluation",
-                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                              child: Text(
+                                "Type d’évaluation",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor),
+                              ),
                             ),
                           ),
                           Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Center(
-                              child: Text("Date de l’évaluation",
-                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                              child: Text(
+                                "Date de l’évaluation",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor),
+                              ),
                             ),
                           ),
                           Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Center(
-                              child: Text("Points",
-                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                              child: Text(
+                                "Points",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor),
+                              ),
                             ),
                           ),
                         ],
@@ -308,12 +340,14 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 8, horizontal: 4),
-                            child: Text(e["type"]),
+                            child:
+                            Text(e["type"], style: TextStyle(color: textColor)),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 8, horizontal: 4),
-                            child: Text(e["date"]),
+                            child:
+                            Text(e["date"], style: TextStyle(color: textColor)),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(

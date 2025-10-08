@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'NewChatScreen.dart';
 import 'chat_screen.dart';
 import 'package:slatereduc/services/app_colors.dart';
 
@@ -135,9 +136,19 @@ class ChatTab extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text("Nouveau chat")));
+        onPressed: () async {
+          final contact = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NewChatScreen(),
+            ),
+          );
+          if (contact != null) {
+            // Ici, vous pouvez démarrer un nouveau chat avec le contact sélectionné
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Nouveau chat avec ${contact.name}')),
+            );
+          }
         },
         backgroundColor: AppColors.primary(context),
         child: Icon(Icons.message, color: AppColors.text(context)),

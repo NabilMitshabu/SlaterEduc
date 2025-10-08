@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../services/app_colors.dart';
 
 class HistoriquePaiementScreen extends StatelessWidget {
   const HistoriquePaiementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final bleu = const Color(0xFF1B54F5);
+    final bleu = AppColors.primary(context);
+    final bg = AppColors.background(context);
+    final txt = AppColors.text(context);
     final paiements = [
       {
         "regle": "Minerval Septembre",
@@ -35,19 +38,19 @@ class HistoriquePaiementScreen extends StatelessWidget {
     ];
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: bg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: txt),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Historique paiement",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(color: txt, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: true,
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: bg,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         child: Table(
@@ -60,23 +63,23 @@ class HistoriquePaiementScreen extends StatelessWidget {
           children: [
             TableRow(
               decoration: BoxDecoration(color: bleu.withOpacity(0.08)),
-              children: const [
+              children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Center(
-                    child: Text("En règle de", style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text("En règle de", style: TextStyle(fontWeight: FontWeight.bold, color: txt)),
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Center(
-                    child: Text("Date de paiement", style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text("Date de paiement", style: TextStyle(fontWeight: FontWeight.bold, color: txt)),
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Center(
-                    child: Text("Sommes", style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text("Sommes", style: TextStyle(fontWeight: FontWeight.bold, color: txt)),
                   ),
                 ),
               ],
@@ -85,11 +88,11 @@ class HistoriquePaiementScreen extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Text(p["regle"]!),
+                  child: Text(p["regle"]!, style: TextStyle(color: txt)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Text(p["date"]!),
+                  child: Text(p["date"]!, style: TextStyle(color: txt)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
@@ -103,4 +106,3 @@ class HistoriquePaiementScreen extends StatelessWidget {
     );
   }
 }
-

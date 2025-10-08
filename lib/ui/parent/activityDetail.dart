@@ -138,7 +138,7 @@ class _ActiviteDetailsScreenState extends State<ActiviteDetailsScreen> {
                   children: [
                     const Text("Solde de Frais", style: TextStyle(fontWeight: FontWeight.bold)),
                     IconButton(
-                      icon: const Icon(Icons.history, color: Colors.blue),
+                      icon: const Icon(Icons.arrow_forward, color: Colors.blue),
                       tooltip: 'Historique paiement',
                       onPressed: () {
                         Navigator.push(

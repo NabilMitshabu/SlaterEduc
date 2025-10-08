@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:slatereduc/services/app_colors.dart';
 
 class HistoriquePunitionDetailScreen extends StatelessWidget {
   final String titre;
@@ -18,28 +19,35 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bleu = const Color(0xFF1B54F5);
+    final bleu = AppColors.primary(context);
+    final textColor = AppColors.text(context);
+    final background = AppColors.background(context);
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Details",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+        title: Text(
+          "Détails",
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         centerTitle: true,
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: background,
       body: SingleChildScrollView(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: background,
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
@@ -58,7 +66,11 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
                 child: Center(
                   child: Text(
                     titre,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: textColor,
+                    ),
                   ),
                 ),
               ),
@@ -66,21 +78,19 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
 
               const Divider(height: 2, thickness: 2, color: Color(0xFFD9E8FF)),
 
-
               const SizedBox(height: 18),
-              _buildRow("Description", description),
-              _buildRow("Punitions", punition),
-              _buildRowStatut("Statut de la punition", statut, bleu),
-              _buildRow("Date", date),
+              _buildRow("Description", description, textColor),
+              _buildRow("Punitions", punition, textColor),
+              _buildRowStatut("Statut de la punition", statut, bleu, textColor),
+              _buildRow("Date", date, textColor),
             ],
           ),
         ),
-
       ),
     );
   }
 
-  Widget _buildRow(String label, String value) {
+  Widget _buildRow(String label, String value, Color textColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -90,13 +100,24 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Text(label,
-                    style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 15,
+                    color: textColor,
+                  ),
+                ),
               ),
               Expanded(
-                child: Text(value,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                child: Text(
+                  value,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                  ),
+                ),
               ),
             ],
           ),
@@ -106,7 +127,7 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRowStatut(String label, String statut, Color bleu) {
+  Widget _buildRowStatut(String label, String statut, Color bleu, Color textColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -116,8 +137,14 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Text(label,
-                    style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 15,
+                    color: textColor,
+                  ),
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),

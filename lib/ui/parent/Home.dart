@@ -6,6 +6,8 @@ import 'package:slatereduc/ui/parent/profil.dart';
 import 'package:slatereduc/ui/parent/widget.dart';
 import 'package:slatereduc/services/app_colors.dart';
 
+import 'NotificationScreen.dart';
+
 
 class HomePage extends StatefulWidget {
  // final void Function(bool)? onThemeModeChanged;
@@ -152,7 +154,17 @@ class _HomeTab extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              Icon(Icons.notifications_none, color: AppColors.text(context)),
+              IconButton(
+                icon: Icon(Icons.notifications_none, color: AppColors.text(context)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NotificationScreen(),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -184,6 +196,22 @@ class _HomeTab extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
+          Center(
+            child: SmoothPageIndicator(
+              controller: controller,
+              count: 3, // nombre d'enfants
+              effect: ExpandingDotsEffect(
+                activeDotColor: AppColors.primary(context),
+                dotHeight: 8,
+                dotWidth: 8,
+                expansionFactor: 3,
+                spacing: 4,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
 
           // STATISTIQUES - QUI CHANGE AVEC L'ENFANT
           Container(
@@ -193,7 +221,7 @@ class _HomeTab extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primary(context),
+                  AppColors.primaryBase,
                   AppColors.accentColor(context),
                 ],
                 begin: Alignment.topCenter,
@@ -222,20 +250,7 @@ class _HomeTab extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 16),
-          Center(
-            child: SmoothPageIndicator(
-              controller: controller,
-              count: 3, // nombre d'enfants
-              effect: ExpandingDotsEffect(
-                activeDotColor: AppColors.primary(context),
-                dotHeight: 8,
-                dotWidth: 8,
-                expansionFactor: 3,
-                spacing: 4,
-              ),
-            ),
-          ),
+
 
           const SizedBox(height: 24),
 

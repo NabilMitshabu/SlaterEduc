@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:slatereduc/services/app_colors.dart';
 import 'historique_punition_detail.dart';
 
 class HistoriquePunitionsScreen extends StatelessWidget {
@@ -7,36 +7,44 @@ class HistoriquePunitionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bleu = const Color(0xFF1B54F5);
+    final bleu = AppColors.primary(context);
+    final textColor = AppColors.text(context);
+    final background = AppColors.background(context);
+
     final punitions = [
       {
         "titre": "Cahier incomplet",
-        "date": "12 Decembre 2024",
+        "date": "12 Décembre 2024",
       },
       {
-        "titre": "Retard à l'ecole",
-        "date": "12 Decembre 2024",
+        "titre": "Retard à l'école",
+        "date": "12 Décembre 2024",
       },
       {
         "titre": "Perturbation des cours",
-        "date": "12 Decembre 2024",
+        "date": "12 Décembre 2024",
       },
     ];
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Historique de punitions",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         centerTitle: true,
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: background,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
@@ -44,7 +52,7 @@ class HistoriquePunitionsScreen extends StatelessWidget {
             ...punitions.map((p) => Container(
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: background,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -67,11 +75,18 @@ class HistoriquePunitionsScreen extends StatelessWidget {
                 ),
                 title: Text(
                   p["titre"]!,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: textColor,
+                  ),
                 ),
                 subtitle: Text(
                   p["date"]!,
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                  ),
                 ),
                 trailing: Container(
                   width: 32,
@@ -89,13 +104,13 @@ class HistoriquePunitionsScreen extends StatelessWidget {
                       builder: (context) => HistoriquePunitionDetailScreen(
                         titre: p["titre"]!,
                         description: p["titre"] == "Cahier incomplet"
-                          ? "Le cahier de l’élève n’est pas complètement rempli. Il manque la leçon sur l’histoire."
-                          : p["titre"] == "Retard à l'ecole"
+                            ? "Le cahier de l’élève n’est pas complètement rempli. Il manque la leçon sur l’histoire."
+                            : p["titre"] == "Retard à l'école"
                             ? "L’élève est arrivé après la sonnerie."
                             : "L’élève a perturbé la classe pendant la leçon.",
                         punition: p["titre"] == "Cahier incomplet"
-                          ? "L’élève est collé et doit rester jusqu’à 15h pour finir la leçon manquante."
-                          : p["titre"] == "Retard à l'ecole"
+                            ? "L’élève est collé et doit rester jusqu’à 15h pour finir la leçon manquante."
+                            : p["titre"] == "Retard à l'école"
                             ? "L’élève doit présenter une excuse écrite."
                             : "L’élève doit présenter ses excuses à la classe.",
                         statut: "Effectué",

@@ -17,7 +17,6 @@ class _ProfilTabState extends State<ProfilTab> {
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
     return Scaffold(
       appBar: AppBar(
-        leading: const BackButton(),
         title: Text(
           "Profil",
           style: TextStyle(
@@ -25,10 +24,12 @@ class _ProfilTabState extends State<ProfilTab> {
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
-        ),        centerTitle: true,
+        ),
+        centerTitle: true,
         actions: [
           TextButton(
             onPressed: () {},
+
             child: const Text(
               "Éditer le profil",
               style: TextStyle(color: Colors.blue),
