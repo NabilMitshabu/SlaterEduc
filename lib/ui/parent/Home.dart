@@ -5,9 +5,9 @@ import 'package:slatereduc/ui/parent/activity.dart';
 import 'package:slatereduc/ui/parent/profil.dart';
 import 'package:slatereduc/ui/parent/widget.dart';
 import 'package:slatereduc/services/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'NotificationScreen.dart';
-
 
 class HomePage extends StatefulWidget {
  // final void Function(bool)? onThemeModeChanged;
@@ -22,12 +22,41 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final PageController _controller = PageController();
   int _selectedIndex = 0;
-  int _currentChildIndex = 0; // Nouvel état pour suivre l'enfant actuel
+  int _currentChildIndex = 0;
+
+  // Liste des avatars proposés
+  final List<String> _avatarUrls = [
+    'https://static.vecteezy.com/system/resources/previews/027/951/137/non_2x/stylish-spectacles-guy-3d-avatar-character-illustrations-png.png',
+    'https://img.freepik.com/psd-premium/avatar-3d-lunettes-personnage-pull_1155620-2211.jpg?semt=ais_hybrid&w=740&q=80',
+    'https://img.freepik.com/premium-photo/memoji-african-american-man-white-background-emoji_826801-6856.jpg',
+    'https://img.freepik.com/photos-premium/memoji-homme-heureux-fond-blanc-emoji_826801-6832.jpg',
+    'https://img.freepik.com/photos-gratuite/personnage-dessin-anime-3d_23-2151034079.jpg?semt=ais_hybrid&w=740&q=80',
+    'https://img.freepik.com/photos-premium/memoji-belle-fille-femme-fond-blanc-emoji_826801-6879.jpg?semt=ais_hybrid&w=740&q=80'
+    'https://img.freepik.com/photos-premium/avatar-dessin-anime-rendu-3d-personnage-cartoon-isole_608116-56.jpg?w=360'
+    'https://img.freepik.com/photos-premium/portrait-dessin-anime-adulte-souriant_53876-760918.jpg?semt=ais_hybrid&w=740&q=80'
+    'https://img.freepik.com/premium-photo/massage-therapist-digital-avatar-generative-ai_934475-9090.jpg?semt=ais_hybrid&w=740&q=80'
+    'https://img.freepik.com/photos-premium/memoji-beau-type-asiatique-homme-chinois-fond-blanc-personnage-dessin-anime-emoji_826801-7436.jpg'
+    'https://img.freepik.com/photos-gratuite/portrait-3d-homme-affaires_23-2150793885.jpg?semt=ais_hybrid&w=740&q=80'
+    'https://img.freepik.com/photos-gratuite/portrait-3d-homme-affaires_23-2150793883.jpg?semt=ais_hybrid&w=740&q=80'
+  ];
+  // Avatar sélectionné
+  String _selectedAvatarUrl = 'https://static.vecteezy.com/system/resources/previews/027/951/137/non_2x/stylish-spectacles-guy-3d-avatar-character-illustrations-png.png';
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(_onPageChanged);
+    _loadAvatar();
+  }
+
+  Future<void> _loadAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedUrl = prefs.getString('selected_avatar_url');
+    if (savedUrl != null && savedUrl.isNotEmpty) {
+      setState(() {
+        _selectedAvatarUrl = savedUrl;
+      });
+    }
   }
 
   @override
@@ -49,10 +78,51 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // Fonction pour afficher la sélection d'avatars
+  void _showAvatarSelection() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            children: _avatarUrls.map((url) {
+              return GestureDetector(
+                onTap: () {
+                  Navigator.pop(context, url);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircleAvatar(
+                    radius: 32,
+                    backgroundImage: NetworkImage(url),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+    if (selected != null && selected != _selectedAvatarUrl) {
+      setState(() {
+        _selectedAvatarUrl = selected;
+      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('selected_avatar_url', selected);
+    }
+  }
+
   // Ajout des pages pour chaque onglet du BottomNavigationBar
   List<Widget> get _pages => [
-    _HomeTab(controller: _controller, currentChildIndex: _currentChildIndex, username: '',
-       // username: widget.
+    _HomeTab(
+      controller: _controller,
+      currentChildIndex: _currentChildIndex,
+      username: '',
+      avatarUrl: _selectedAvatarUrl,
+      onAvatarTap: _showAvatarSelection,
     ),
     ChatTab(),
     ActiviteTab(),
@@ -97,8 +167,10 @@ class _HomeTab extends StatelessWidget {
   final PageController controller;
   final int currentChildIndex;
   final String username;
+  final String avatarUrl;
+  final VoidCallback onAvatarTap;
 
-  const _HomeTab({required this.controller, required this.currentChildIndex, required this.username});
+  const _HomeTab({required this.controller, required this.currentChildIndex, required this.username, required this.avatarUrl, required this.onAvatarTap});
 
   // Données des statistiques pour chaque enfant
   final List<Map<String, List<Map<String, String>>>> _childrenStats = const [
@@ -134,10 +206,28 @@ class _HomeTab extends StatelessWidget {
           // HEADER
           Row(
             children: [
-              CircleAvatar(
-                radius: 25,
-                child: Icon(Icons.person, size: 32, color: AppColors.text(context)),
-                backgroundColor: AppColors.primary(context),
+              InkWell(
+                onTap: onAvatarTap,
+                child: CircleAvatar(
+                  radius: 25,
+                  backgroundColor: AppColors.primary(context),
+                  child: ClipOval(
+                    child: Image.network(
+                      avatarUrl,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/images/avatar_default.png',
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Column(

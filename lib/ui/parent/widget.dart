@@ -116,7 +116,7 @@ class ChildCard extends StatelessWidget {
           children: [
             ListTile(
               leading: const CircleAvatar(
-                backgroundImage: AssetImage("assets/student.png"),
+                backgroundImage: AssetImage("assets/images/ocean.png"),
               ),
               title: Text(name),
               subtitle: Text(level),
