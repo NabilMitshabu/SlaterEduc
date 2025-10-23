@@ -10,11 +10,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'NotificationScreen.dart';
 
 class HomePage extends StatefulWidget {
- // final void Function(bool)? onThemeModeChanged;
-  //final bool isDarkMode;
-  //final String username;
-  //const HomePage({super.key, this.onThemeModeChanged, this.isDarkMode = false, required this.username});
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -23,6 +18,7 @@ class _HomePageState extends State<HomePage> {
   final PageController _controller = PageController();
   int _selectedIndex = 0;
   int _currentChildIndex = 0;
+  bool _isLoadingAvatar = true;
 
   // Liste des avatars proposés
   final List<String> _avatarUrls = [
@@ -31,13 +27,13 @@ class _HomePageState extends State<HomePage> {
     'https://img.freepik.com/premium-photo/memoji-african-american-man-white-background-emoji_826801-6856.jpg',
     'https://img.freepik.com/photos-premium/memoji-homme-heureux-fond-blanc-emoji_826801-6832.jpg',
     'https://img.freepik.com/photos-gratuite/personnage-dessin-anime-3d_23-2151034079.jpg?semt=ais_hybrid&w=740&q=80',
-    'https://img.freepik.com/photos-premium/memoji-belle-fille-femme-fond-blanc-emoji_826801-6879.jpg?semt=ais_hybrid&w=740&q=80'
-    'https://img.freepik.com/photos-premium/avatar-dessin-anime-rendu-3d-personnage-cartoon-isole_608116-56.jpg?w=360'
-    'https://img.freepik.com/photos-premium/portrait-dessin-anime-adulte-souriant_53876-760918.jpg?semt=ais_hybrid&w=740&q=80'
-    'https://img.freepik.com/premium-photo/massage-therapist-digital-avatar-generative-ai_934475-9090.jpg?semt=ais_hybrid&w=740&q=80'
-    'https://img.freepik.com/photos-premium/memoji-beau-type-asiatique-homme-chinois-fond-blanc-personnage-dessin-anime-emoji_826801-7436.jpg'
-    'https://img.freepik.com/photos-gratuite/portrait-3d-homme-affaires_23-2150793885.jpg?semt=ais_hybrid&w=740&q=80'
-    'https://img.freepik.com/photos-gratuite/portrait-3d-homme-affaires_23-2150793883.jpg?semt=ais_hybrid&w=740&q=80'
+    'https://img.freepik.com/photos-premium/memoji-belle-fille-femme-fond-blanc-emoji_826801-6879.jpg?semt=ais_hybrid&w=740&q=80',
+    'https://img.freepik.com/photos-premium/avatar-dessin-anime-rendu-3d-personnage-cartoon-isole_608116-56.jpg?w=360',
+    'https://img.freepik.com/photos-premium/portrait-dessin-anime-adulte-souriant_53876-760918.jpg?semt=ais_hybrid&w=740&q=80',
+    'https://img.freepik.com/premium-photo/massage-therapist-digital-avatar-generative-ai_934475-9090.jpg?semt=ais_hybrid&w=740&q=80',
+    'https://img.freepik.com/photos-premium/memoji-beau-type-asiatique-homme-chinois-fond-blanc-personnage-dessin-anime-emoji_826801-7436.jpg',
+    'https://img.freepik.com/photos-gratuite/portrait-3d-homme-affaires_23-2150793885.jpg?semt=ais_hybrid&w=740&q=80',
+    'https://img.freepik.com/photos-gratuite/portrait-3d-homme-affaires_23-2150793883.jpg?semt=ais_hybrid&w=740&q=80',
   ];
   // Avatar sélectionné
   String _selectedAvatarUrl = 'https://static.vecteezy.com/system/resources/previews/027/951/137/non_2x/stylish-spectacles-guy-3d-avatar-character-illustrations-png.png';
@@ -53,10 +49,11 @@ class _HomePageState extends State<HomePage> {
     final prefs = await SharedPreferences.getInstance();
     final savedUrl = prefs.getString('selected_avatar_url');
     if (savedUrl != null && savedUrl.isNotEmpty) {
-      setState(() {
-        _selectedAvatarUrl = savedUrl;
-      });
+      _selectedAvatarUrl = savedUrl;
     }
+    setState(() {
+      _isLoadingAvatar = false;
+    });
   }
 
   @override
@@ -131,38 +128,143 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingAvatar) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Récupère les couleurs du thème pour la bottom navigation (avec fallbacks)
+    final navTheme = Theme.of(context).bottomNavigationBarTheme;
+    final navBackground = navTheme.backgroundColor ?? AppColors.surfaceLight;
+    final selectedColor = navTheme.selectedItemColor ?? AppColors.primaryBase;
+    final unselectedColor = navTheme.unselectedItemColor ?? Colors.grey.shade600;
+
     return Scaffold(
       body: SafeArea(
         child: _pages[_selectedIndex],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: navBackground,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.alpha(Colors.black, 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Container(
+            height: 70,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _BottomNavItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
+                  label: "Home",
+                  isActive: _selectedIndex == 0,
+                  onTap: () => _onItemTapped(0),
+                  selectedColor: selectedColor,
+                  unselectedColor: unselectedColor,
+                ),
+                _BottomNavItem(
+                  icon: Icons.chat_outlined,
+                  activeIcon: Icons.chat_rounded,
+                  label: "Chat",
+                  isActive: _selectedIndex == 1,
+                  onTap: () => _onItemTapped(1),
+                  selectedColor: selectedColor,
+                  unselectedColor: unselectedColor,
+                ),
+                _BottomNavItem(
+                  icon: Icons.event_outlined,
+                  activeIcon: Icons.event_rounded,
+                  label: "Activité",
+                  isActive: _selectedIndex == 2,
+                  onTap: () => _onItemTapped(2),
+                  selectedColor: selectedColor,
+                  unselectedColor: unselectedColor,
+                ),
+                _BottomNavItem(
+                  icon: Icons.person_outlined,
+                  activeIcon: Icons.person_rounded,
+                  label: "Profil",
+                  isActive: _selectedIndex == 3,
+                  onTap: () => _onItemTapped(3),
+                  selectedColor: selectedColor,
+                  unselectedColor: unselectedColor,
+                ),
+              ],
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: "Chat",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.event),
-            label: "Activité",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profil",
-          ),
-        ],
-        onTap: _onItemTapped,
+        ),
       ),
     );
   }
 }
 
-// Définition des bases de chaque interface
+class _BottomNavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+  final Color selectedColor;
+  final Color unselectedColor;
+
+  const _BottomNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+    required this.selectedColor,
+    required this.unselectedColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final selColor = selectedColor;
+    final unselColor = unselectedColor;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.alpha(selColor, 0.08) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isActive ? activeIcon : icon,
+              color: isActive ? selColor : unselColor,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                color: isActive ? selColor : unselColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Le reste de votre code reste exactement inchangé...
 class _HomeTab extends StatelessWidget {
   final PageController controller;
   final int currentChildIndex;
@@ -344,7 +446,7 @@ class _HomeTab extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-// SECTION PROGRESSION
+          // SECTION PROGRESSION
           Text(
             "Progression",
             style: TextStyle(
@@ -361,7 +463,7 @@ class _HomeTab extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: AppColors.alpha(Colors.grey, 0.1),
                   blurRadius: 6,
                   offset: const Offset(0, 4),
                 ),
@@ -382,7 +484,7 @@ class _HomeTab extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         "L'élève Océan Ntambwe doit améliorer sa moyenne",
-                        style: TextStyle(fontSize: 12, color: AppColors.text(context).withOpacity(0.7)),
+                        style: TextStyle(fontSize: 12, color: AppColors.alpha(AppColors.text(context), 0.7)),
                       ),
                     ],
                   ),
@@ -429,7 +531,7 @@ class _HomeTab extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: AppColors.alpha(Colors.grey, 0.1),
                   blurRadius: 6,
                   offset: const Offset(0, 4),
                 ),
@@ -450,7 +552,7 @@ class _HomeTab extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         "L'élève Mulsagwa a déjà enregistré 3 absences sur 4 sans justification",
-                        style: TextStyle(fontSize: 12, color: AppColors.text(context).withOpacity(0.7)),
+                        style: TextStyle(fontSize: 12, color: AppColors.alpha(AppColors.text(context), 0.7)),
                       ),
                     ],
                   ),
@@ -477,7 +579,6 @@ class _HomeTab extends StatelessWidget {
               ],
             ),
           ),
-
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slatereduc/services/app_colors.dart';
+import 'package:slatereduc/services/app_localizations.dart';
 
 class NotificationScreen extends StatelessWidget {
   final List<Map<String, String>> notifications = [
@@ -22,13 +23,14 @@ class NotificationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background(context),
       appBar: AppBar(
         elevation: 0,
         centerTitle: true,
         title: Text(
-          "Notifications",
+          loc.translate('notifications'),
           style: TextStyle(
             color: AppColors.text(context),
             fontWeight: FontWeight.bold,
@@ -43,7 +45,7 @@ class NotificationScreen extends StatelessWidget {
           final notif = notifications[index];
           return ListTile(
             leading: CircleAvatar(
-              backgroundColor: AppColors.primary(context).withOpacity(0.1),
+              backgroundColor: AppColors.alpha(AppColors.primary(context), 0.1),
               child: Icon(Icons.notifications, color: AppColors.primary(context)),
             ),
             title: Text(
@@ -55,11 +57,11 @@ class NotificationScreen extends StatelessWidget {
             ),
             subtitle: Text(
               notif["subtitle"]!,
-              style: TextStyle(color: AppColors.text(context).withOpacity(0.7)),
+              style: TextStyle(color: AppColors.alpha(AppColors.text(context), 0.7)),
             ),
             trailing: Text(
               notif["date"]!,
-              style: TextStyle(fontSize: 12, color: AppColors.text(context).withOpacity(0.5)),
+              style: TextStyle(fontSize: 12, color: AppColors.alpha(AppColors.text(context), 0.5)),
             ),
           );
         },
@@ -67,4 +69,3 @@ class NotificationScreen extends StatelessWidget {
     );
   }
 }
-

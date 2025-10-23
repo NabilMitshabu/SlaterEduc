@@ -13,22 +13,16 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # Read more about Android versioning at https://developer.android.com/studio/publish/versioning
 # In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
 # Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-# of the product and file versions while build-number is used as the build suffix.
+# the developer.apple.com documentation.
 version: 1.0.0+1
 
 environment:
   sdk: ^3.9.2
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
   provider: ^6.0.5
 
@@ -38,8 +32,9 @@ dependencies:
   go_router: ^13.2.2
   http: ^1.2.0
   shared_preferences: ^2.1.1
+  flutter_secure_storage: ^8.0.0
   smooth_page_indicator: ^1.1.0
-  intl: ^0.18.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -75,9 +70,9 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
   # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
+  # in this "flutter" section. Each entry in this list should have the
+  # "family" key with the font family name, and a "fonts" key with
+  # a list giving the asset and other descriptors for the font. For
   # example:
   # fonts:
   #   - family: Schyler

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slatereduc/services/app_colors.dart';
+import 'package:slatereduc/services/app_localizations.dart';
 
 class ResultatCompletScreen extends StatefulWidget {
   const ResultatCompletScreen({super.key});
@@ -10,12 +11,6 @@ class ResultatCompletScreen extends StatefulWidget {
 
 class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
   int selectedIndex = 0;
-
-  final List<String> periodes = [
-    "1ère Période",
-    "2ème Période",
-    "3ème Période",
-  ];
 
   final Map<String, List<Map<String, dynamic>>> resultatsParPeriode = {
     "1ère Période": [
@@ -61,11 +56,13 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final bleu = AppColors.primary(context);
     final background = AppColors.background(context);
     final textColor = AppColors.text(context);
 
-    final resultats = resultatsParPeriode[periodes[selectedIndex]] ?? [];
+    final periodes = [loc.translate('period_1'), loc.translate('period_2'), loc.translate('period_3')];
+    final resultats = resultatsParPeriode[periodes[selectedIndex]] ?? resultatsParPeriode.values.first;
 
     return Scaffold(
       appBar: AppBar(
@@ -76,7 +73,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Résultat complet",
+          loc.translate('result_complete'),
           style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -107,7 +104,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                           onPressed: () => setState(() => selectedIndex = i),
                           child: Text(
                             periodes[i],
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            style: TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
                       );
@@ -121,10 +118,10 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                   decoration: BoxDecoration(
                     color: background,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: bleu.withOpacity(0.18)),
+                    border: Border.all(color: AppColors.alpha(bleu, 0.18)),
                     boxShadow: [
                       BoxShadow(
-                        color: bleu.withOpacity(0.04),
+                        color: AppColors.alpha(bleu, 0.04),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -136,18 +133,18 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                       1: FlexColumnWidth(1),
                     },
                     border: TableBorder.symmetric(
-                      inside: BorderSide(color: bleu.withOpacity(0.12)),
-                      outside: BorderSide(color: bleu.withOpacity(0.18)),
+                      inside: BorderSide(color: AppColors.alpha(bleu, 0.12)),
+                      outside: BorderSide(color: AppColors.alpha(bleu, 0.18)),
                     ),
                     children: [
                       TableRow(
-                        decoration: BoxDecoration(color: bleu.withOpacity(0.08)),
+                        decoration: BoxDecoration(color: AppColors.alpha(bleu, 0.08)),
                         children: [
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Center(
                               child: Text(
-                                "Cours",
+                                loc.translate('cours'),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: textColor,
@@ -159,7 +156,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Center(
                               child: Text(
-                                "Points Obtenus",
+                                loc.translate('points_obtenus'),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: textColor,
@@ -222,13 +219,13 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                   elevation: 2,
                 ),
                 icon: const Icon(Icons.download_rounded),
-                label: const Text(
-                  'Télécharger',
+                label: Text(
+                  loc.translate('download'),
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Téléchargement en cours...')),
+                    SnackBar(content: Text(loc.translate('downloading'))),
                   );
                 },
               ),
@@ -241,6 +238,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
 
   void _showEvaluationsSheet(
       BuildContext context, String cours, List<dynamic> evaluations) {
+    final loc = AppLocalizations.of(context);
     final bleu = AppColors.primary(context);
     final background = AppColors.background(context);
     final textColor = AppColors.text(context);
@@ -284,7 +282,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                 const SizedBox(height: 16),
                 Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: bleu.withOpacity(0.2)),
+                    border: Border.all(color: AppColors.alpha(bleu, 0.2)),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Table(
@@ -294,17 +292,17 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                       2: FlexColumnWidth(1),
                     },
                     border: TableBorder.symmetric(
-                      inside: BorderSide(color: bleu.withOpacity(0.12)),
+                      inside: BorderSide(color: AppColors.alpha(bleu, 0.12)),
                     ),
                     children: [
                       TableRow(
-                        decoration: BoxDecoration(color: bleu.withOpacity(0.08)),
+                        decoration: BoxDecoration(color: AppColors.alpha(bleu, 0.08)),
                         children: [
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Center(
                               child: Text(
-                                "Type d’évaluation",
+                                loc.translate('evaluation_type'),
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: textColor),
@@ -315,7 +313,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Center(
                               child: Text(
-                                "Date de l’évaluation",
+                                loc.translate('evaluation_date'),
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: textColor),
@@ -326,7 +324,7 @@ class _ResultatCompletScreenState extends State<ResultatCompletScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             child: Center(
                               child: Text(
-                                "Points",
+                                loc.translate('points'),
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: textColor),

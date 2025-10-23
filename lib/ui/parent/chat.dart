@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'NewChatScreen.dart';
 import 'chat_screen.dart';
 import 'package:slatereduc/services/app_colors.dart';
+import 'package:slatereduc/services/app_localizations.dart';
 
 class MessageModel {
   final String name;
@@ -41,6 +42,7 @@ class ChatTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background(context),
       appBar: AppBar(
@@ -48,7 +50,7 @@ class ChatTab extends StatelessWidget {
         elevation: 0,
         centerTitle: true, // titre centré
         title: Text(
-          "Messages",
+          loc.translate('messages'),
           style: TextStyle(
             color: AppColors.text(context),
             fontWeight: FontWeight.bold,
@@ -145,13 +147,14 @@ class ChatTab extends StatelessWidget {
           );
           if (contact != null) {
             // Ici, vous pouvez démarrer un nouveau chat avec le contact sélectionné
+            final message = loc.translate('new_chat_with').replaceAll('{name}', contact.name);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Nouveau chat avec ${contact.name}')),
+              SnackBar(content: Text(message)),
             );
           }
         },
-        backgroundColor: AppColors.primary(context),
-        child: Icon(Icons.message, color: AppColors.text(context)),
+        backgroundColor: AppColors.secondaryColor(context),
+        child: Icon(Icons.message, color: AppColors.onPrimary(context)),
       ),
     );
   }

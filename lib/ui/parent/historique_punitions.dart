@@ -56,7 +56,7 @@ class HistoriquePunitionsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: bleu.withOpacity(0.08),
+                    color: AppColors.alpha(bleu, 0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -68,7 +68,7 @@ class HistoriquePunitionsScreen extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: bleu.withOpacity(0.12),
+                    color: AppColors.alpha(bleu, 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(Icons.edit_note, color: bleu, size: 28),
@@ -92,7 +92,7 @@ class HistoriquePunitionsScreen extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: bleu.withOpacity(0.12),
+                    color: AppColors.alpha(bleu, 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.arrow_forward_ios, color: bleu, size: 20),

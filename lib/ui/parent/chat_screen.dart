@@ -90,7 +90,7 @@ class ChatScreen extends StatelessWidget {
             Center(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.background(context), // texte dynamique
+                  color: AppColors.background(context),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 child: const Text(
@@ -218,7 +218,7 @@ class ChatScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.07),
+                    color: AppColors.alpha(Colors.grey, 0.07),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),

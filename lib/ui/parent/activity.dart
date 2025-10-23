@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slatereduc/services/app_colors.dart';
+import 'package:slatereduc/services/app_localizations.dart';
 
 import 'activityDetail.dart';
 
@@ -8,6 +9,7 @@ class ActiviteTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final List<Map<String, String>> eleves = [
       {
         "nom": "Ocean NTAMBWE",
@@ -25,7 +27,7 @@ class ActiviteTab extends StatelessWidget {
       backgroundColor: AppColors.background(context),
       appBar: AppBar(
         title: Text(
-          "Activités",
+          loc.translate('activities'),
           style: TextStyle(
             color: AppColors.text(context),
             fontWeight: FontWeight.bold,
@@ -76,7 +78,7 @@ class ActiviteTab extends StatelessWidget {
                             eleve["classe"]!,
                             style: TextStyle(
                               fontSize: 15,
-                              color: AppColors.text(context).withOpacity(0.7), // texte dynamique
+                              color: AppColors.alpha(AppColors.text(context), 0.7), // texte dynamique
                             ),
                           ),
                           SizedBox(height: 8),
@@ -97,7 +99,7 @@ class ActiviteTab extends StatelessWidget {
                                 ),
                               );
                             },
-                            child: Text("Voir les activités"),
+                            child: Text(loc.translate('view_activities')),
                           ),
                         ],
                       ),

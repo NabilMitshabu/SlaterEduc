@@ -36,7 +36,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     await prefs.setBool('onboarding_done', true);
     // envoie vers la page login
     if (!mounted) return;
-    context.go('/home');
+    context.go('/');
   }
 
   void _next() {

@@ -59,10 +59,10 @@ class HistoriquePaiementScreen extends StatelessWidget {
             1: FlexColumnWidth(2),
             2: FlexColumnWidth(1),
           },
-          border: TableBorder.all(color: bleu.withOpacity(0.12)),
+          border: TableBorder.all(color: AppColors.alpha(bleu, 0.12)),
           children: [
             TableRow(
-              decoration: BoxDecoration(color: bleu.withOpacity(0.08)),
+              decoration: BoxDecoration(color: AppColors.alpha(bleu, 0.08)),
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),

@@ -48,4 +48,23 @@ class AuthService {
       throw Exception('Erreur d\'inscription: $e');
     }
   }
+
+  // Envoie la demande de réinitialisation en utilisant le numéro de téléphone
+  Future<void> forgotPassword(String phone) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'phone': phone}),
+      );
+      if (response.statusCode == 200) {
+        // Succès, l'API a envoyé l'email
+        return;
+      } else {
+        throw Exception('Échec de la demande: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Erreur lors de la demande: $e');
+    }
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slatereduc/services/app_colors.dart';
+import 'package:slatereduc/services/app_localizations.dart';
 
 class HistoriquePunitionDetailScreen extends StatelessWidget {
   final String titre;
@@ -22,6 +23,7 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
     final bleu = AppColors.primary(context);
     final textColor = AppColors.text(context);
     final background = AppColors.background(context);
+    final loc = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -32,7 +34,7 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Détails",
+          loc.translate('details'),
           style: TextStyle(
             color: textColor,
             fontWeight: FontWeight.bold,
@@ -51,7 +53,7 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: bleu.withOpacity(0.08),
+                color: AppColors.alpha(bleu, 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 2),
               ),
@@ -79,10 +81,10 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
               const Divider(height: 2, thickness: 2, color: Color(0xFFD9E8FF)),
 
               const SizedBox(height: 18),
-              _buildRow("Description", description, textColor),
-              _buildRow("Punitions", punition, textColor),
-              _buildRowStatut("Statut de la punition", statut, bleu, textColor),
-              _buildRow("Date", date, textColor),
+              _buildRow(loc.translate('description'), description, textColor),
+              _buildRow(loc.translate('punitions'), punition, textColor),
+              _buildRowStatut(loc.translate('punition_status'), statut, bleu, textColor),
+              _buildRow(loc.translate('date_label'), date, textColor),
             ],
           ),
         ),
@@ -114,7 +116,7 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
                   value,
                   textAlign: TextAlign.right,
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: AppColors.alpha(Colors.grey, 0.75),
                     fontSize: 13,
                   ),
                 ),
@@ -122,7 +124,7 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(height: 1, thickness: 1, color: Color(0xFFF2F2F2)),
+        const Divider(height: 1, thickness: 1.5, color: Color(0xFFD9E8FF)),
       ],
     );
   }
@@ -146,10 +148,11 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
+
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: bleu.withOpacity(0.12),
+                  color: AppColors.alpha(bleu, 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -161,10 +164,12 @@ class HistoriquePunitionDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              const Divider(height: 1, thickness: 1.5, color: Color(0xFFD9E8FF)),
+
             ],
           ),
         ),
-        const Divider(height: 1, thickness: 1, color: Color(0xFFF2F2F2)),
+        const Divider(height: 1.5, thickness: 1.5, color: Color(0xFFD9E8FF)),
       ],
     );
   }
