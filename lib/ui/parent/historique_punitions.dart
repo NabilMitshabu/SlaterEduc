@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slatereduc/services/app_colors.dart';
+import 'package:slatereduc/services/app_localizations.dart';
 import 'historique_punition_detail.dart';
 
 class HistoriquePunitionsScreen extends StatelessWidget {
@@ -13,15 +14,15 @@ class HistoriquePunitionsScreen extends StatelessWidget {
 
     final punitions = [
       {
-        "titre": "Cahier incomplet",
+        "titre": "incomplete_notebook",
         "date": "12 Décembre 2024",
       },
       {
-        "titre": "Retard à l'école",
+        "titre": "late_to_school",
         "date": "12 Décembre 2024",
       },
       {
-        "titre": "Perturbation des cours",
+        "titre": "class_disturbance",
         "date": "12 Décembre 2024",
       },
     ];
@@ -35,7 +36,7 @@ class HistoriquePunitionsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Historique de punitions",
+          AppLocalizations.of(context).translate('history_punishments'),
           style: TextStyle(
             color: textColor,
             fontWeight: FontWeight.bold,
@@ -74,7 +75,7 @@ class HistoriquePunitionsScreen extends StatelessWidget {
                   child: Icon(Icons.edit_note, color: bleu, size: 28),
                 ),
                 title: Text(
-                  p["titre"]!,
+                  AppLocalizations.of(context).translate(p["titre"]!),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -103,17 +104,9 @@ class HistoriquePunitionsScreen extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) => HistoriquePunitionDetailScreen(
                         titre: p["titre"]!,
-                        description: p["titre"] == "Cahier incomplet"
-                            ? "Le cahier de l’élève n’est pas complètement rempli. Il manque la leçon sur l’histoire."
-                            : p["titre"] == "Retard à l'école"
-                            ? "L’élève est arrivé après la sonnerie."
-                            : "L’élève a perturbé la classe pendant la leçon.",
-                        punition: p["titre"] == "Cahier incomplet"
-                            ? "L’élève est collé et doit rester jusqu’à 15h pour finir la leçon manquante."
-                            : p["titre"] == "Retard à l'école"
-                            ? "L’élève doit présenter une excuse écrite."
-                            : "L’élève doit présenter ses excuses à la classe.",
-                        statut: "Effectué",
+                        description: AppLocalizations.of(context).translate('punition_description_' + p["titre"]!),
+                        punition: AppLocalizations.of(context).translate('punition_action_' + p["titre"]!),
+                        statut: AppLocalizations.of(context).translate('status_done'),
                         date: p["date"]!,
                       ),
                     ),

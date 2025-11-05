@@ -1,0 +1,58 @@
+{
+  "profile": "[en] Profil",
+  "general": "[en] Général",
+  "settings": "[en] Logique",
+  "notifications": "[en] Notifications",
+  "dark_mode": "[en] Mode sombre",
+  "language": "[en] Langue",
+  "faq": "[en] FAQ",
+  "help": "[en] Aide et Support",
+  "logout": "[en] Déconnexion",
+  "messages": "[en] Messages",
+  "new_chat_with": "[en] Nouveau chat avec {name}",
+  "result_complete": "[en] Résultat complet",
+  "period_1": "[en] 1ère Période",
+  "period_2": "[en] 2ème Période",
+  "period_3": "[en] 3ème Période",
+  "cours": "[en] Cours",
+  "points_obtenus": "[en] Points Obtenus",
+  "evaluation_type": "[en] Type d’évaluation",
+  "evaluation_date": "[en] Date de l’évaluation",
+  "points": "[en] Points",
+  "download": "[en] Télécharger",
+  "downloading": "[en] Téléchargement en cours...",
+  "details": "[en] Détails",
+  "description": "[en] Description",
+  "punitions": "[en] Punitions",
+  "punition_status": "[en] Statut de la punition",
+  "date_label": "[en] Date",
+  "activities": "[en] Activités",
+  "view_activities": "[en] Voir les activités",
+
+  "today": "[en] Aujourd'hui",
+  "minerval_septembre": "[en] Minerval Septembre",
+  "state_fees": "[en] Frais de l'état",
+  "exam_fees": "[en] Frais des examens",
+  "mikembo_trip": "[en] Sortie vers Mikembo",
+  "events": "[en] Manifestations",
+
+  "french": "[en] Français",
+  "english": "[en] Anglais",
+  "swahili": "[en] Kiswahili",
+  "translations_loaded": "[en] Traductions chargées",
+  "no_dynamic_translation_found": "[en] Aucune traduction dynamique trouvée",
+
+  "incomplete_notebook": "[en] Cahier incomplet",
+  "late_to_school": "[en] Retard à l'école",
+  "class_disturbance": "[en] Perturbation des cours",
+
+  "punition_description_incomplete_notebook": "[en] Le cahier de l’élève n’est pas complètement rempli. Il manque la leçon sur l'histoire.",
+  "punition_action_incomplete_notebook": "[en] L’élève est collé et doit rester jusqu’à 15h pour finir la leçon manquante.",
+
+  "punition_description_late_to_school": "[en] L’élève est arrivé après la sonnerie.",
+  "punition_action_late_to_school": "[en] L’élève doit présenter une excuse écrite.",
+
+  "punition_description_class_disturbance": "[en] L’élève a perturbé la classe pendant la leçon.",
+  "punition_action_class_disturbance": "[en] L’élève doit présenter ses excuses à la classe."
+}
+

@@ -21,28 +21,28 @@ class MessageModel {
 }
 
 class ChatTab extends StatelessWidget {
-  final List<MessageModel> messages = [
-    MessageModel(
-      name: "Mr Doeol Mwanakahambo",
-      message:
-      "Bonjour Mme Du Corbeau. Je tiens à vous informer que Neville a eu plusieurs difficultés de discipline en classe",
-      time: "5 min",
-      isUnread: true,
-      avatarUrl: "https://randomuser.me/api/portraits/men/31.jpg",
-    ),
-    MessageModel(
-      name: "Madame Sofia",
-      message:
-      "Bonjour Mme Du Corbeau. Je tiens à vous informer que Neville a eu plusieurs difficultés de discipline en classe cette semaine. Une rencontre est souhaitable afin d’en discuter.",
-      time: "10 min",
-      isUnread: false,
-      avatarUrl: "https://randomuser.me/api/portraits/women/44.jpg",
-    ),
-  ];
+  // messages will be built inside build() so we can access BuildContext for localization
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final List<MessageModel> messages = [
+      MessageModel(
+        name: "Mr Doeol Mwanakahambo",
+        message: loc.translate('sample_discipline_short'),
+        time: "5 min",
+        isUnread: true,
+        avatarUrl: "https://randomuser.me/api/portraits/men/31.jpg",
+      ),
+      MessageModel(
+        name: "Madame Sofia",
+        message: loc.translate('sample_discipline_long'),
+        time: "10 min",
+        isUnread: false,
+        avatarUrl: "https://randomuser.me/api/portraits/women/44.jpg",
+      ),
+    ];
+
     return Scaffold(
       backgroundColor: AppColors.background(context),
       appBar: AppBar(

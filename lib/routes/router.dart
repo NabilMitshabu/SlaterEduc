@@ -13,7 +13,7 @@ Future<bool> checkOnboarding() async {
   return prefs.getBool('onboarding_done') ?? false;
 }
 
-// Expose a function that builds a GoRouter and accepts an optional Listenable
+// Expose a fonction that builds a GoRouter and accepts an optional Listenable
 GoRouter createRouter({Listenable? refreshListenable}) {
   return GoRouter(
     initialLocation: '/onboarding',
@@ -24,7 +24,7 @@ GoRouter createRouter({Listenable? refreshListenable}) {
         builder: (context, state) => const OnboardingPage(),
         redirect: (context, state) async {
           final seen = await checkOnboarding();
-          if (seen) return '/home';
+          if (seen) return '/';
           return null;
         },
       ),
@@ -34,9 +34,13 @@ GoRouter createRouter({Listenable? refreshListenable}) {
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => HomePage(
-            //username: state.extra as String
-        )
+        builder: (context, state) {
+          // Transmet les données passées via "extra" (ex: résultat du login)
+          final extra = state.extra as Map<String, dynamic>?;
+          return HomePage(
+            parentData: extra,
+          );
+        },
       ),
     ],
   );

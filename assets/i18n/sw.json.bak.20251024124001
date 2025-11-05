@@ -1,0 +1,58 @@
+{
+  "profile": "[sw] Profil",
+  "general": "[sw] Général",
+  "settings": "[sw] Logique",
+  "notifications": "[sw] Notifications",
+  "dark_mode": "[sw] Mode sombre",
+  "language": "[sw] Langue",
+  "faq": "[sw] FAQ",
+  "help": "[sw] Aide et Support",
+  "logout": "[sw] Déconnexion",
+  "messages": "[sw] Messages",
+  "new_chat_with": "[sw] Nouveau chat avec {name}",
+  "result_complete": "[sw] Résultat complet",
+  "period_1": "[sw] 1ère Période",
+  "period_2": "[sw] 2ème Période",
+  "period_3": "[sw] 3ème Période",
+  "cours": "[sw] Cours",
+  "points_obtenus": "[sw] Points Obtenus",
+  "evaluation_type": "[sw] Type d’évaluation",
+  "evaluation_date": "[sw] Date de l’évaluation",
+  "points": "[sw] Points",
+  "download": "[sw] Télécharger",
+  "downloading": "[sw] Téléchargement en cours...",
+  "details": "[sw] Détails",
+  "description": "[sw] Description",
+  "punitions": "[sw] Punitions",
+  "punition_status": "[sw] Statut de la punition",
+  "date_label": "[sw] Date",
+  "activities": "[sw] Activités",
+  "view_activities": "[sw] Voir les activités",
+
+  "today": "[sw] Aujourd'hui",
+  "minerval_septembre": "[sw] Minerval Septembre",
+  "state_fees": "[sw] Frais de l'état",
+  "exam_fees": "[sw] Frais des examens",
+  "mikembo_trip": "[sw] Sortie vers Mikembo",
+  "events": "[sw] Manifestations",
+
+  "french": "[sw] Français",
+  "english": "[sw] Anglais",
+  "swahili": "[sw] Kiswahili",
+  "translations_loaded": "[sw] Traductions chargées",
+  "no_dynamic_translation_found": "[sw] Aucune traduction dynamique trouvée",
+
+  "incomplete_notebook": "[sw] Cahier incomplet",
+  "late_to_school": "[sw] Retard à l'école",
+  "class_disturbance": "[sw] Perturbation des cours",
+
+  "punition_description_incomplete_notebook": "[sw] Le cahier de l’élève n’est pas complètement rempli. Il manque la leçon sur l'histoire.",
+  "punition_action_incomplete_notebook": "[sw] L’élève est collé et doit rester jusqu’à 15h pour finir la leçon manquante.",
+
+  "punition_description_late_to_school": "[sw] L’élève est arrivé après la sonnerie.",
+  "punition_action_late_to_school": "[sw] L’élève doit présenter une excuse écrite.",
+
+  "punition_description_class_disturbance": "[sw] L’élève a perturbé la classe pendant la leçon.",
+  "punition_action_class_disturbance": "[sw] L’élève doit présenter ses excuses à la classe."
+}
+

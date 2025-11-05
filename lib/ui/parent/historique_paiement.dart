@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/app_colors.dart';
+import '../../services/app_localizations.dart';
 
 class HistoriquePaiementScreen extends StatelessWidget {
   const HistoriquePaiementScreen({super.key});
@@ -11,27 +12,27 @@ class HistoriquePaiementScreen extends StatelessWidget {
     final txt = AppColors.text(context);
     final paiements = [
       {
-        "regle": "Minerval Septembre",
+        "regle": "minerval_septembre",
         "date": "Lundi 13 Sept.2024",
         "somme": "70",
       },
       {
-        "regle": "Frais de l'etat",
+        "regle": "state_fees",
         "date": "Lundi 15 Juin 2025",
         "somme": "20",
       },
       {
-        "regle": "Frais des examens",
+        "regle": "exam_fees",
         "date": "Mardi 02 Juillet 2025",
         "somme": "10",
       },
       {
-        "regle": "Sortie vers Mikembo",
+        "regle": "mikembo_trip",
         "date": "Mardi 15 Juin 2025",
         "somme": "20",
       },
       {
-        "regle": "Manifestations",
+        "regle": "events",
         "date": "Mardi 15 Juin 2025",
         "somme": "10",
       },
@@ -88,7 +89,7 @@ class HistoriquePaiementScreen extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Text(p["regle"]!, style: TextStyle(color: txt)),
+                  child: Text(AppLocalizations.of(context).translate(p["regle"]!), style: TextStyle(color: txt)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),

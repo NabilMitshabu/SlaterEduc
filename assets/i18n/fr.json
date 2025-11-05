@@ -1,0 +1,58 @@
+{
+  "profile": "Profil",
+  "general": "Général",
+  "settings": "Logique",
+  "notifications": "Notifications",
+  "dark_mode": "Mode sombre",
+  "language": "Langue",
+  "faq": "FAQ",
+  "help": "Aide et Support",
+  "logout": "Déconnexion",
+  "messages": "Messages",
+  "new_chat_with": "Nouveau chat avec {name}",
+  "result_complete": "Résultat complet",
+  "period_1": "1ère Période",
+  "period_2": "2ème Période",
+  "period_3": "3ème Période",
+  "cours": "Cours",
+  "points_obtenus": "Points Obtenus",
+  "evaluation_type": "Type d’évaluation",
+  "evaluation_date": "Date de l’évaluation",
+  "points": "Points",
+  "download": "Télécharger",
+  "downloading": "Téléchargement en cours...",
+  "details": "Détails",
+  "description": "Description",
+  "punitions": "Punitions",
+  "punition_status": "Statut de la punition",
+  "date_label": "Date",
+  "activities": "Activités",
+  "view_activities": "Voir les activités",
+
+  "today": "Aujourd'hui",
+  "minerval_septembre": "Minerval Septembre",
+  "state_fees": "Frais de l'état",
+  "exam_fees": "Frais des examens",
+  "mikembo_trip": "Sortie vers Mikembo",
+  "events": "Manifestations",
+
+  "french": "Français",
+  "english": "Anglais",
+  "swahili": "Kiswahili",
+  "translations_loaded": "Traductions chargées",
+  "no_dynamic_translation_found": "Aucune traduction dynamique trouvée",
+
+  "incomplete_notebook": "Cahier incomplet",
+  "late_to_school": "Retard à l'école",
+  "class_disturbance": "Perturbation des cours",
+
+  "punition_description_incomplete_notebook": "Le cahier de l’élève n’est pas complètement rempli. Il manque la leçon sur l'histoire.",
+  "punition_action_incomplete_notebook": "L’élève est collé et doit rester jusqu’à 15h pour finir la leçon manquante.",
+
+  "punition_description_late_to_school": "L’élève est arrivé après la sonnerie.",
+  "punition_action_late_to_school": "L’élève doit présenter une excuse écrite.",
+
+  "punition_description_class_disturbance": "L’élève a perturbé la classe pendant la leçon.",
+  "punition_action_class_disturbance": "L’élève doit présenter ses excuses à la classe."
+}
+

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:slatereduc/services/app_colors.dart';
 import 'package:slatereduc/services/theme_provider.dart';
 import 'package:slatereduc/services/app_localizations.dart';
 import 'package:slatereduc/services/language_provider.dart';
-import 'package:slatereduc/services/translation_service.dart';
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:slatereduc/services/parent_service.dart';
 
 class ProfilTab extends StatefulWidget {
   const ProfilTab({Key? key}) : super(key: key);
@@ -16,62 +17,7 @@ class ProfilTab extends StatefulWidget {
 }
 
 class _ProfilTabState extends State<ProfilTab> {
-  final _secureStorage = const FlutterSecureStorage();
-  // helper to show API key dialog
-  Future<void> _showApiKeyDialog(BuildContext context, LanguageProvider languageProvider) async {
-    final prefs = await SharedPreferences.getInstance();
-    final existing = await _secureStorage.read(key: 'google_translate_api_key') ?? '';
-    final controller = TextEditingController(text: existing);
-
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clé Google Translate'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Entrez la clé API'),
-          obscureText: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              // clear saved key
-              await _secureStorage.delete(key: 'google_translate_api_key');
-              // clear cached dynamic translations
-              final lang = languageProvider.locale.languageCode;
-              await prefs.remove('dyn_trans_$lang');
-              AppLocalizations.setDynamicTranslations(lang, {});
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Clé supprimée')));
-            },
-            child: const Text('Effacer'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final key = controller.text.trim();
-              if (key.isEmpty) return;
-              // await TranslationService.saveApiKey(key); // supprimé : la clé ne doit jamais être stockée côté app
-              // try to fetch translations for current language
-              final lang = languageProvider.locale.languageCode;
-              final dyn = await TranslationService.fetchTranslations(lang);
-              if (dyn.isNotEmpty) {
-                AppLocalizations.setDynamicTranslations(lang, dyn);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Clé sauvegardée et traductions chargées')));
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Clé sauvegardée (aucune traduction chargée)')));
-              }
-              Navigator.of(context).pop();
-            },
-            child: const Text('Sauver'),
-          ),
-        ],
-      ),
-    );
-  }
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -81,8 +27,9 @@ class _ProfilTabState extends State<ProfilTab> {
     final languageProvider = Provider.of<LanguageProvider>(context);
 
     return Scaffold(
+      backgroundColor: AppColors.background(context),
+
       appBar: AppBar(
-        backgroundColor: AppColors.background(context),
         elevation: 0,
         title: Text(
           loc.translate('profile'),
@@ -92,6 +39,7 @@ class _ProfilTabState extends State<ProfilTab> {
             fontSize: 20,
           ),
         ),
+        centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -104,13 +52,32 @@ class _ProfilTabState extends State<ProfilTab> {
                   backgroundImage: AssetImage('assets/images/img1.png'),
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  "Madame Da Corbeau",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.text(context)),
-                ),
-                Text(
-                  "21nov2021@protonmail.com",
-                  style: TextStyle(color: AppColors.alpha(AppColors.text(context), 0.75)),
+                // Remplacement du nom statique par le nom dynamique du parent
+                FutureBuilder<Map<String, dynamic>>(
+                  future: _getParentDataFromApi(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    }
+                    final parent = snapshot.data;
+                    final nom = parent != null ? ((parent['first_name'] ?? '') + ' ' + (parent['last_name'] ?? '')) : '';
+                    final phone = parent != null ? (parent['phone'] ?? '') : '';
+                    if (nom.trim().isEmpty) {
+                      return Text('Nom du parent non trouvé', style: TextStyle(color: Colors.red));
+                    }
+                    return Column(
+                      children: [
+                        Text(
+                          nom,
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.text(context)),
+                        ),
+                        Text(
+                          phone,
+                          style: TextStyle(color: AppColors.alpha(AppColors.text(context), 0.75)),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -142,33 +109,32 @@ class _ProfilTabState extends State<ProfilTab> {
           ListTile(
             leading: Icon(Icons.language, color: AppColors.primary(context)),
             title: Text(loc.translate('language'), style: TextStyle(color: AppColors.text(context))),
-            trailing: DropdownButton<String>(
-              value: languageProvider.locale.languageCode,
-              underline: const SizedBox.shrink(),
-              items: const [
-                DropdownMenuItem(value: 'fr', child: Text('Français')),
-                DropdownMenuItem(value: 'en', child: Text('English')),
-                DropdownMenuItem(value: 'sw', child: Text('Kiswahili')),
-              ],
-              onChanged: (val) {
-                if (val != null) {
-                  languageProvider.setLanguage(val);
-                }
-              },
-            ),
+            trailing: _isLoading
+                ? const SizedBox(width: 48, height: 24, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
+                : DropdownButton<String>(
+                    value: languageProvider.locale.languageCode,
+                    underline: const SizedBox.shrink(),
+                    items: [
+                      DropdownMenuItem(value: 'fr', child: Text(loc.translate('french'))),
+                      DropdownMenuItem(value: 'en', child: Text(loc.translate('english'))),
+                      DropdownMenuItem(value: 'sw', child: Text(loc.translate('swahili'))),
+                    ],
+                    onChanged: (val) async {
+                      if (val != null) {
+                        setState(() { _isLoading = true; });
+                        // change app language and let provider handle loading dynamic translations
+                        final bool loaded = await languageProvider.setLanguage(val);
+                        if (loaded) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('translations_loaded'))));
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('no_dynamic_translation_found'))));
+                        }
+                        setState(() { _isLoading = false; });
+                      }
+                    },
+                  ),
           ),
 
-          const SizedBox(height: 12),
-          // ListTile to configure Google Translate API key (masqué, non affiché)
-          // ListTile(
-          //   leading: Icon(Icons.vpn_key, color: AppColors.primary(context)),
-          //   title: Text('Clé API traduction', style: TextStyle(color: AppColors.text(context))),
-          //   trailing: ElevatedButton(
-          //     style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary(context)),
-          //     child: Text('Configurer', style: TextStyle(color: AppColors.onPrimary(context))),
-          //     onPressed: () => _showApiKeyDialog(context, languageProvider),
-          //   ),
-          // ),
 
           const SizedBox(height: 10),
           SectionTitle(title: loc.translate('general')),
@@ -190,6 +156,51 @@ class _ProfilTabState extends State<ProfilTab> {
         ],
       ),
     );
+  }
+
+  Future<List<Map<String, dynamic>>> _getAllParents() async {
+    final parentService = ParentService();
+    final url = '${parentService.baseUrl}/parents';
+    try {
+      final resp = await http.get(Uri.parse(url));
+      if (resp.statusCode == 200) {
+        final body = json.decode(resp.body);
+        if (body is List) {
+          return List<Map<String, dynamic>>.from(body.map((e) => Map<String, dynamic>.from(e)));
+        }
+      }
+    } catch (e) {
+      print('Erreur getAllParents: $e');
+    }
+    return [];
+  }
+
+  // Méthode robuste pour récupérer le parent connecté
+  Future<Map<String, dynamic>> _getParentDataFromApi() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? userId;
+    final jsonStr = prefs.getString('parent_data');
+    if (jsonStr != null) {
+      try {
+        final parentData = Map<String, dynamic>.from(json.decode(jsonStr));
+        userId = parentData['id_user']?.toString();
+        if (userId == null && parentData['id'] != null) {
+          userId = parentData['id'].toString();
+        }
+      } catch (_) {}
+    }
+    if (userId == null) {
+      userId = prefs.getString('user_id');
+    }
+    final parentsList = await _getAllParents();
+    if (userId != null && parentsList.isNotEmpty) {
+      final found = parentsList.firstWhere(
+        (p) => p['id_user']?.toString() == userId,
+        orElse: () => <String, dynamic>{},
+      );
+      if (found.isNotEmpty) return found;
+    }
+    return {};
   }
 }
 

@@ -33,13 +33,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     Icons.chat_bubble_outline,
     Icons.account_circle,
   ];
-  final List<Color> _scenarioColors = [
-    // kept as defaults but overridden in build by theme-aware colors
-    Colors.greenAccent.shade400,
-    Colors.orangeAccent,
-    Colors.lightBlueAccent,
-    Colors.purpleAccent,
-  ];
 
   @override
   void initState() {
@@ -80,8 +73,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         passwordController.text,
       );
       if (mounted) {
-        final username = response['username'] ?? nameController.text.trim();
-        GoRouter.of(context).go('/home', extra: username);
+        // On passe la réponse complète au route /home pour qu'il puisse récupérer l'ID du parent
+        GoRouter.of(context).go('/home', extra: response);
       }
     } catch (e) {
       setState(() => _errorMessage = e.toString());
@@ -161,29 +154,29 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                       key: ValueKey<int>(_iconIndex),
                       scale: _iconAnimation,
                       child: Builder(
-                        builder: (context) {
-                          // Couleurs thématiques pour la "scène" d'icônes
-                          final beginColor = AppColors.scenarioColor((_iconIndex - 1 + _scenarioIcons.length) % _scenarioIcons.length);
-                          final endColor = AppColors.scenarioColor(_iconIndex);
+                          builder: (context) {
+                            // Couleurs thématiques pour la "scène" d'icônes
+                            final beginColor = AppColors.scenarioColor((_iconIndex - 1 + _scenarioIcons.length) % _scenarioIcons.length);
+                            final endColor = AppColors.scenarioColor(_iconIndex);
 
-                          return TweenAnimationBuilder<Color?>(
-                            tween: ColorTween(begin: beginColor, end: endColor),
-                            duration: const Duration(milliseconds: 600),
-                            builder: (context, color, child) {
-                              return Icon(
-                                _scenarioIcons[_iconIndex],
-                                size: 82,
-                                color: color ?? endColor,
-                              );
-                            },
-                          );
+                            return TweenAnimationBuilder<Color?>(
+                              tween: ColorTween(begin: beginColor, end: endColor),
+                              duration: const Duration(milliseconds: 600),
+                              builder: (context, color, child) {
+                                return Icon(
+                                  _scenarioIcons[_iconIndex],
+                                  size: 82,
+                                  color: color ?? endColor,
+                                );
+                              },
+                            );
 
-                        }
+                          }
                       ),
-                     ),
-                   ),
-                 ),
-               ),
+                    ),
+                  ),
+                ),
+              ),
 
               Text(
                 _isLogin

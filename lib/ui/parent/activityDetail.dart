@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:slatereduc/services/app_colors.dart';
+import 'package:slatereduc/services/app_localizations.dart';
 import 'historique_punitions.dart';
 import 'resultat.dart';
 import 'historique_paiement.dart';
@@ -136,10 +136,10 @@ class _ActiviteDetailsScreenState extends State<ActiviteDetailsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const Text("Solde de Frais", style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(AppLocalizations.of(context).translate('fees_balance'), style: const TextStyle(fontWeight: FontWeight.bold)),
                     IconButton(
                       icon: const Icon(Icons.arrow_forward, color: Colors.blue),
-                      tooltip: 'Historique paiement',
+                      tooltip: AppLocalizations.of(context).translate('history_payment'),
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -170,16 +170,16 @@ class _ActiviteDetailsScreenState extends State<ActiviteDetailsScreen> {
 
             // ---- Ligne + Texte "PREMIER DEMESTRE" + Ligne ----
             Row(
-              children: const [
-                Expanded(child: Divider(thickness: 1)),
+              children: [
+                const Expanded(child: Divider(thickness: 1)),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text(
-                    "PREMIER DEMESTRE",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    AppLocalizations.of(context).translate('first_semester'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
-                Expanded(child: Divider(thickness: 1)),
+                const Expanded(child: Divider(thickness: 1)),
               ],
             ),
 
@@ -225,7 +225,7 @@ class _ActiviteDetailsScreenState extends State<ActiviteDetailsScreen> {
                         MaterialPageRoute(builder: (context) => const ResultatCompletScreen()),
                       );
                     },
-                    child: const Text("Résultat complet"),
+                    child: Text(AppLocalizations.of(context).translate('result_complete')),
                   )
                 ],
               ),
@@ -237,7 +237,7 @@ class _ActiviteDetailsScreenState extends State<ActiviteDetailsScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Discipline", style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(AppLocalizations.of(context).translate('discipline'), style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -252,13 +252,13 @@ class _ActiviteDetailsScreenState extends State<ActiviteDetailsScreen> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text("Barème de sanction", style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text("L’élève NTAMBWE a reçu une note en Conduite"),
+                          children: [
+                            Text(AppLocalizations.of(context).translate('penalty_scale'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text(AppLocalizations.of(context).translateWithArgs('student_discipline_note', {'name': 'NTAMBWE'})),
                           ],
                         ),
                       ),
-                      const Text("75%", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 18)),
+                      Text("75%", style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 18)),
                     ],
                   ),
                 ),
@@ -266,14 +266,13 @@ class _ActiviteDetailsScreenState extends State<ActiviteDetailsScreen> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const HistoriquePunitionsScreen()),
                 );
               },
-              child: const Text("Historique des activités"),
+              child: Text(AppLocalizations.of(context).translate('history_activities')),
             )
           ],
         ),

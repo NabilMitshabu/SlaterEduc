@@ -6,10 +6,17 @@ import 'package:slatereduc/ui/parent/profil.dart';
 import 'package:slatereduc/ui/parent/widget.dart';
 import 'package:slatereduc/services/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import 'NotificationScreen.dart';
+import 'package:slatereduc/services/parent_service.dart';
 
 class HomePage extends StatefulWidget {
+  final Map<String, dynamic>? parentData;
+
+  const HomePage({super.key, this.parentData});
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -20,12 +27,18 @@ class _HomePageState extends State<HomePage> {
   int _currentChildIndex = 0;
   bool _isLoadingAvatar = true;
 
+  List<Map<String, dynamic>> _eleves = [];
+  bool _isLoadingEleves = true;
+  String? _elevesError;
+
+  final ParentService _parentService = ParentService();
+
   // Liste des avatars proposés
   final List<String> _avatarUrls = [
     'https://static.vecteezy.com/system/resources/previews/027/951/137/non_2x/stylish-spectacles-guy-3d-avatar-character-illustrations-png.png',
     'https://img.freepik.com/psd-premium/avatar-3d-lunettes-personnage-pull_1155620-2211.jpg?semt=ais_hybrid&w=740&q=80',
     'https://img.freepik.com/premium-photo/memoji-african-american-man-white-background-emoji_826801-6856.jpg',
-    'https://img.freepik.com/photos-premium/memoji-homme-heureux-fond-blanc-emoji_826801-6832.jpg',
+    'https://img.freepik.com/premium-photo/memoji-homme-heureux-fond-blanc-emoji_826801-6832.jpg',
     'https://img.freepik.com/photos-gratuite/personnage-dessin-anime-3d_23-2151034079.jpg?semt=ais_hybrid&w=740&q=80',
     'https://img.freepik.com/photos-premium/memoji-belle-fille-femme-fond-blanc-emoji_826801-6879.jpg?semt=ais_hybrid&w=740&q=80',
     'https://img.freepik.com/photos-premium/avatar-dessin-anime-rendu-3d-personnage-cartoon-isole_608116-56.jpg?w=360',
@@ -38,11 +51,132 @@ class _HomePageState extends State<HomePage> {
   // Avatar sélectionné
   String _selectedAvatarUrl = 'https://static.vecteezy.com/system/resources/previews/027/951/137/non_2x/stylish-spectacles-guy-3d-avatar-character-illustrations-png.png';
 
+  // Nom et prénom du parent
+  String _parentFirstName = '';
+  String _parentLastName = '';
+
   @override
   void initState() {
     super.initState();
     _controller.addListener(_onPageChanged);
     _loadAvatar();
+    _loadEleves();
+  }
+
+  Future<void> _loadEleves() async {
+    setState(() {
+      _isLoadingEleves = true;
+      _elevesError = null;
+    });
+
+    try {
+      // Tentatives pour déterminer l'ID du parent à partir des données reçues
+      String? parentId;
+
+      // Cas 1: parentData contient directement l'id ou id_user (ex: on a passé l'objet parent)
+      if (widget.parentData != null) {
+        final pd = widget.parentData!;
+        // debug: afficher la structure reçue
+        print('DEBUG: parentData passed to Home: ${pd.toString()}');
+        parentId = (pd['id'] ?? pd['id_user'])?.toString();
+
+        // Cas 2: parentData est en fait la réponse de login qui contient un objet 'user'
+        if (parentId == null && pd['user'] is Map) {
+          parentId = (pd['user']['id'] ?? pd['user']['user_id'])?.toString();
+        }
+
+        // Cas 3: parfois la réponse contient directement un objet 'user' (si on a passé user)
+        if (parentId == null && pd['id'] == null && pd['username'] != null && pd['email'] != null) {
+          // Peut-être que pd est l'objet user lui-même
+          parentId = (pd['user_id'] ?? pd['id'])?.toString();
+        }
+      }
+
+      // debug: afficher l'id déduit
+      print('DEBUG: resolved parentId=$parentId');
+
+      // Cas 4: fallback à SharedPreferences (AuthService stocke 'user_id' lors du login)
+      if (parentId == null) {
+        final prefs = await SharedPreferences.getInstance();
+        final saved = prefs.getString('user_id');
+        print('DEBUG: user_id from prefs=$saved');
+        if (saved != null && saved.isNotEmpty) parentId = saved;
+      }
+
+      if (parentId == null) {
+        // Si on ne trouve toujours pas d'ID parent, on renvoie des données factices minimales pour garder l'app fonctionnelle
+        _eleves = [];
+      } else {
+        final list = await _parentService.getElevesByParentId(parentId);
+        _eleves = list;
+        // Charger le nom du parent depuis la liste /parents
+        await _loadParentNameFromList(parentId);
+      }
+    } catch (e) {
+      _elevesError = e.toString();
+      _eleves = [];
+      // log de l'erreur
+      print('ERROR: Failed to load eleves: $e');
+    } finally {
+      if (mounted) setState(() {
+        _isLoadingEleves = false;
+      });
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _getAllParents() async {
+    final url = '${_parentService.baseUrl}/parents';
+    try {
+      final resp = await http.get(Uri.parse(url));
+      if (resp.statusCode == 200) {
+        final body = json.decode(resp.body);
+        if (body is List) {
+          return List<Map<String, dynamic>>.from(body.map((e) => Map<String, dynamic>.from(e)));
+        }
+      }
+    } catch (e) {
+      print('Erreur getAllParents: $e');
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>> _getConnectedParent() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? userId;
+    if (widget.parentData != null) {
+      userId = widget.parentData!['id_user']?.toString();
+      if (userId == null && widget.parentData!['id'] != null) {
+        userId = widget.parentData!['id'].toString();
+      }
+      if (userId == null && widget.parentData!['user'] is Map) {
+        userId = widget.parentData!['user']['id']?.toString();
+      }
+    }
+    if (userId == null) {
+      userId = prefs.getString('user_id');
+    }
+    final parentsList = await _getAllParents();
+    if (userId != null && parentsList.isNotEmpty) {
+      final found = parentsList.firstWhere(
+        (p) => p['id_user']?.toString() == userId,
+        orElse: () => <String, dynamic>{},
+      );
+      if (found.isNotEmpty) return found;
+    }
+    return {};
+  }
+
+  Future<void> _loadParentNameFromList(String parentId) async {
+    try {
+      final parent = await _getConnectedParent();
+      setState(() {
+        _parentFirstName = parent['first_name'] ?? '';
+        _parentLastName = parent['last_name'] ?? '';
+      });
+      print('DEBUG: parent name loaded from service: $_parentFirstName $_parentLastName');
+    } catch (e) {
+      print('ERROR: Failed to load parent name from service: $e');
+    }
   }
 
   Future<void> _loadAvatar() async {
@@ -117,12 +251,17 @@ class _HomePageState extends State<HomePage> {
     _HomeTab(
       controller: _controller,
       currentChildIndex: _currentChildIndex,
-      username: '',
+      username: widget.parentData != null ? (widget.parentData!['first_name'] ?? '') : '',
+      firstName: _parentFirstName,
+      lastName: _parentLastName,
       avatarUrl: _selectedAvatarUrl,
       onAvatarTap: _showAvatarSelection,
+      eleves: _eleves,
+      isLoadingEleves: _isLoadingEleves,
+      elevesError: _elevesError,
     ),
     ChatTab(),
-    ActiviteTab(),
+    ActiviteTab(eleves: _eleves),
     ProfilTab(),
   ];
 
@@ -269,10 +408,26 @@ class _HomeTab extends StatelessWidget {
   final PageController controller;
   final int currentChildIndex;
   final String username;
+  final String firstName;
+  final String lastName;
   final String avatarUrl;
   final VoidCallback onAvatarTap;
+  final List<Map<String, dynamic>> eleves;
+  final bool isLoadingEleves;
+  final String? elevesError;
 
-  const _HomeTab({required this.controller, required this.currentChildIndex, required this.username, required this.avatarUrl, required this.onAvatarTap});
+  const _HomeTab({
+    required this.controller,
+    required this.currentChildIndex,
+    required this.username,
+    required this.firstName,
+    required this.lastName,
+    required this.avatarUrl,
+    required this.onAvatarTap,
+    required this.eleves,
+    required this.isLoadingEleves,
+    required this.elevesError,
+  });
 
   // Données des statistiques pour chaque enfant
   final List<Map<String, List<Map<String, String>>>> _childrenStats = const [
@@ -299,6 +454,9 @@ class _HomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentStats = _childrenStats[currentChildIndex]["stats"]!;
+
+    // Suppression du log répétitif
+    // print('Affichage nom parent : $firstName $lastName');
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -339,9 +497,10 @@ class _HomeTab extends StatelessWidget {
                     "Bonjour,",
                     style: TextStyle(fontSize: 16, color: AppColors.accentColor(context)),
                   ),
+                  // Affichage du prénom et nom du parent
                   Text(
-                    username,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.text(context)),
+                    (firstName + " " + lastName).trim(),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text(context)),
                   ),
                 ],
               ),
@@ -368,21 +527,26 @@ class _HomeTab extends StatelessWidget {
               controller: controller,
               scrollDirection: Axis.horizontal,
               children: [
-                ChildCard(
-                  name: "Ocean Ntambwe",
-                  level: "5ème Primaire",
-                  presence: [true, true, false, true, false, false],
-                ),
-                ChildCard(
-                  name: "Luna Kabila",
-                  level: "3ème Primaire",
-                  presence: [true, true, true, true, true, false],
-                ),
-                ChildCard(
-                  name: "Eliot Mvemba",
-                  level: "2ème Primaire",
-                  presence: [true, false, true, true, false, false],
-                ),
+                // Si la liste d'élèves est chargée, on la mappe; sinon on affiche des placeholders
+                if (isLoadingEleves)
+                  ChildCard(
+                    name: "Chargement...",
+                    level: "",
+                    presence: [false, false, false, false, false, false],
+                  ),
+                if (!isLoadingEleves && eleves.isEmpty)
+                  ChildCard(
+                    name: "Aucun enfant trouvé",
+                    level: "",
+                    presence: [false, false, false, false, false, false],
+                  ),
+                if (!isLoadingEleves && eleves.isNotEmpty)
+                  for (final e in eleves)
+                    ChildCard(
+                      name: (e['first_name'] ?? '') + ' ' + (e['last_name'] ?? ''),
+                      level: e['classe'] ?? e['level'] ?? 'N/A',
+                      presence: [true, true, false, true, false, false],
+                    ),
               ],
             ),
           ),
@@ -391,7 +555,7 @@ class _HomeTab extends StatelessWidget {
           Center(
             child: SmoothPageIndicator(
               controller: controller,
-              count: 3, // nombre d'enfants
+              count: eleves.isNotEmpty ? eleves.length : 1, // nombre d'enfants
               effect: ExpandingDotsEffect(
                 activeDotColor: AppColors.primary(context),
                 dotHeight: 8,
@@ -441,8 +605,6 @@ class _HomeTab extends StatelessWidget {
               ],
             ),
           ),
-
-
 
           const SizedBox(height: 24),
 
@@ -514,7 +676,7 @@ class _HomeTab extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-// SECTION DISCIPLINE
+          // SECTION DISCIPLINE
           Text(
             "Discipline",
             style: TextStyle(
@@ -584,3 +746,4 @@ class _HomeTab extends StatelessWidget {
     );
   }
 }
+

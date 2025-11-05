@@ -5,23 +5,28 @@ import 'package:slatereduc/services/app_localizations.dart';
 import 'activityDetail.dart';
 
 class ActiviteTab extends StatelessWidget {
-  const ActiviteTab({super.key});
+  final List<Map<String, dynamic>> eleves;
+  const ActiviteTab({super.key, this.eleves = const []});
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    final List<Map<String, String>> eleves = [
-      {
-        "nom": "Ocean NTAMBWE",
-        "classe": "4 ème Primaire",
-        "imagePath": "assets/images/img1.png", // Remplace par une image existante
-      },
-      {
-        "nom": "Lumière NTAMBWE",
-        "classe": "6ème Commerciale et Gestion",
-        "imagePath": "assets/images/img1.png", // Remplace par une image existante
-      },
-    ];
+
+    final List<Map<String, dynamic>> displayEleves = eleves.isNotEmpty
+        ? eleves
+            .map((e) => {
+                  'nom': ((e['first_name'] ?? '') + ' ' + (e['last_name'] ?? '')).trim(),
+                  'classe': (e['classe'] ?? e['level'] ?? ''),
+                  'imagePath': (e['image'] as String?) ?? 'assets/images/img1.png',
+                })
+            .toList()
+        : [
+            {
+              'nom': 'Aucun enfant',
+              'classe': '',
+              'imagePath': 'assets/images/img1.png',
+            }
+          ];
 
     return Scaffold(
       backgroundColor: AppColors.background(context),
@@ -38,7 +43,7 @@ class ActiviteTab extends StatelessWidget {
         iconTheme: IconThemeData(color: AppColors.text(context)),
       ),
       body: ListView(
-        children: eleves.map((eleve) {
+        children: displayEleves.map((eleve) {
           return Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -58,6 +63,7 @@ class ActiviteTab extends StatelessWidget {
                         width: 160,
                         height: 160,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Image.asset('assets/images/img1.png', width: 160, height: 160, fit: BoxFit.cover),
                       ),
                     ),
                     SizedBox(width: 12),

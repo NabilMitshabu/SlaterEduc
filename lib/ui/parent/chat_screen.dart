@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slatereduc/services/app_colors.dart';
+import 'package:slatereduc/services/app_localizations.dart';
 
 // Widget du chat fidèle au modèle fourni
 class ChatScreen extends StatelessWidget {
@@ -93,8 +94,8 @@ class ChatScreen extends StatelessWidget {
                   color: AppColors.background(context),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                child: const Text(
-                  "Aujourd'hui",
+                child: Text(
+                  AppLocalizations.of(context).translate('today'),
                   style: TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ),
