@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../connexion/login_page.dart';
 import '../ui/OnboardingPage.dart';
 import '../ui/parent/Home.dart';
+import '../ui/prof/Home.dart';
+
 
 
 // Vérifie si l’onboarding a déjà été vu
@@ -31,6 +33,10 @@ GoRouter createRouter({Listenable? refreshListenable}) {
       GoRoute(
         path: '/',
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: '/homeProf',
+        builder: (context, state) => const ProfHome(),
       ),
       GoRoute(
         path: '/home',

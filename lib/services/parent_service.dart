@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ParentService {
   final String baseUrl;
 
-  ParentService({this.baseUrl = 'http://10.251.9.153:8000'});
+  ParentService({this.baseUrl = 'http://10.124.105.153:8000'});
 
   /// Récupère le token d'authentification (si présent) depuis SharedPreferences
   Future<String?> _getToken() async {

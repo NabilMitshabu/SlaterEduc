@@ -15,6 +15,7 @@ class ActiviteTab extends StatelessWidget {
     final List<Map<String, dynamic>> displayEleves = eleves.isNotEmpty
         ? eleves
             .map((e) => {
+                  'id': (e['id'] ?? e['id_eleve'] ?? ''),
                   'nom': ((e['first_name'] ?? '') + ' ' + (e['last_name'] ?? '')).trim(),
                   'classe': (e['classe'] ?? e['level'] ?? ''),
                   'imagePath': (e['image'] as String?) ?? 'assets/images/img1.png',
@@ -22,6 +23,7 @@ class ActiviteTab extends StatelessWidget {
             .toList()
         : [
             {
+              'id': '',
               'nom': 'Aucun enfant',
               'classe': '',
               'imagePath': 'assets/images/img1.png',
@@ -94,6 +96,7 @@ class ActiviteTab extends StatelessWidget {
                               foregroundColor: AppColors.text(context),
                             ),
                             onPressed: () {
+                              print('DEBUG: ActiviteTab - opening details for eleveId=${eleve["id"]} nom=${eleve["nom"]}');
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -101,6 +104,7 @@ class ActiviteTab extends StatelessWidget {
                                     nom: eleve["nom"]!,
                                     classe: eleve["classe"]!,
                                     imagePath: eleve["imagePath"]!,
+                                    eleveId: (eleve["id"] ?? ''),
                                   ),
                                 ),
                               );

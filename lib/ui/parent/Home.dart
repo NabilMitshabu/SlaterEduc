@@ -11,6 +11,7 @@ import 'dart:convert';
 
 import 'NotificationScreen.dart';
 import 'package:slatereduc/services/parent_service.dart';
+import 'package:slatereduc/services/presence_service.dart';
 
 class HomePage extends StatefulWidget {
   final Map<String, dynamic>? parentData;
@@ -32,6 +33,7 @@ class _HomePageState extends State<HomePage> {
   String? _elevesError;
 
   final ParentService _parentService = ParentService();
+  final PresenceService _presenceService = PresenceService();
 
   // Liste des avatars proposés
   final List<String> _avatarUrls = [
@@ -109,6 +111,8 @@ class _HomePageState extends State<HomePage> {
       } else {
         final list = await _parentService.getElevesByParentId(parentId);
         _eleves = list;
+        // enrichir chaque élève avec la présence de la semaine courante
+        await _enrichElevesWithPresence();
         // Charger le nom du parent depuis la liste /parents
         await _loadParentNameFromList(parentId);
       }
@@ -243,6 +247,83 @@ class _HomePageState extends State<HomePage> {
       });
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('selected_avatar_url', selected);
+    }
+  }
+
+  Future<void> _enrichElevesWithPresence() async {
+    try {
+      if (_eleves.isEmpty) return;
+
+      // Calculer les jours de la semaine courante (Lundi -> Samedi)
+      final today = DateTime.now();
+      final monday = today.subtract(Duration(days: today.weekday - 1)); // weekday: Mon=1
+      final weekDays = List<DateTime>.generate(6, (i) => DateTime(monday.year, monday.month, monday.day + i));
+
+      // Récupérer toutes les sessions (le service peut ignorer l'idClasse actuellement)
+      final sessions = await _presenceService.getSessionsPresence('');
+
+      // Préparer un mapping date -> liste de sessions (par jour)
+      final Map<String, List<Map<String, dynamic>>> sessionsByDate = {};
+      for (final s in sessions) {
+        try {
+          final dateRaw = s['date'] ?? s['created_at'];
+          if (dateRaw == null) continue;
+          final dt = DateTime.parse(dateRaw.toString()).toLocal();
+          final key = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+          sessionsByDate.putIfAbsent(key, () => []).add(s);
+        } catch (e) {
+          // ignore malformed dates
+          print('WARN: unable to parse session date: $e');
+        }
+      }
+
+      // Pour chaque élève récupérer ses présences
+      for (final e in _eleves) {
+        try {
+          String? eleveId = (e['id'] ?? e['id_eleve'] ?? e['eleve_id'] ?? e['student_id'] ?? e['user_id'])?.toString();
+          if (eleveId == null || eleveId.isEmpty) {
+            if (e.containsKey('id') && e['id'] != null) eleveId = e['id'].toString();
+          }
+
+          final presences = (eleveId != null) ? await _presenceService.getPresencesForEleve(eleveId) : <Map<String, dynamic>>[];
+
+          final List<bool?> presenceForWeek = List<bool?>.filled(6, null);
+          final List<Color> colorsForWeek = List<Color>.filled(6, Colors.orange);
+
+          for (var i = 0; i < weekDays.length; i++) {
+            final d = weekDays[i];
+            final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+            final dayPresence = presences.firstWhere(
+              (p) => DateTime.parse(p['created_at']).day == d.day && DateTime.parse(p['created_at']).month == d.month && DateTime.parse(p['created_at']).year == d.year,
+              orElse: () => <String, dynamic>{},
+            );
+            if (dayPresence.isEmpty) {
+              presenceForWeek[i] = null;
+              colorsForWeek[i] = Colors.orange;
+            } else if (dayPresence['is_present'] == true) {
+              presenceForWeek[i] = true;
+              colorsForWeek[i] = Colors.blue;
+            } else if (dayPresence['is_present'] == false) {
+              presenceForWeek[i] = false;
+              colorsForWeek[i] = Colors.red;
+            } else {
+              presenceForWeek[i] = null;
+              colorsForWeek[i] = Colors.orange;
+            }
+          }
+
+          e['presence'] = presenceForWeek;
+          e['presenceColors'] = colorsForWeek;
+        } catch (err) {
+          e['presence'] = [null, null, null, null, null, null];
+          e['presenceColors'] = [Colors.orange, Colors.orange, Colors.orange, Colors.orange, Colors.orange, Colors.orange];
+        }
+      }
+
+      // Mettre à jour l'UI
+      if (mounted) setState(() {});
+    } catch (e) {
+      print('ERROR: _enrichElevesWithPresence failed: $e');
     }
   }
 
@@ -403,7 +484,6 @@ class _BottomNavItem extends StatelessWidget {
   }
 }
 
-// Le reste de votre code reste exactement inchangé...
 class _HomeTab extends StatelessWidget {
   final PageController controller;
   final int currentChildIndex;
@@ -451,12 +531,22 @@ class _HomeTab extends StatelessWidget {
     },
   ];
 
+  Color _getPresenceColor(bool? present) {
+    if (present == null) return Colors.orange;
+    return present ? Colors.blue : Colors.red;
+  }
+
+  List<Color> _buildPresenceColors(List<bool> presence) {
+    return presence.map((p) {
+      if (p == null) return Colors.orange;
+      return p ? Colors.blue : Colors.red;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentStats = _childrenStats[currentChildIndex]["stats"]!;
 
-    // Suppression du log répétitif
-    // print('Affichage nom parent : $firstName $lastName');
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -533,19 +623,26 @@ class _HomeTab extends StatelessWidget {
                     name: "Chargement...",
                     level: "",
                     presence: [false, false, false, false, false, false],
+                    presenceColors: _buildPresenceColors([false, false, false, false, false, false]),
                   ),
                 if (!isLoadingEleves && eleves.isEmpty)
                   ChildCard(
                     name: "Aucun enfant trouvé",
                     level: "",
                     presence: [false, false, false, false, false, false],
+                    presenceColors: _buildPresenceColors([false, false, false, false, false, false]),
                   ),
                 if (!isLoadingEleves && eleves.isNotEmpty)
                   for (final e in eleves)
                     ChildCard(
                       name: (e['first_name'] ?? '') + ' ' + (e['last_name'] ?? ''),
                       level: e['classe'] ?? e['level'] ?? 'N/A',
-                      presence: [true, true, false, true, false, false],
+                      presence: (e['presence'] is List)
+                        ? List<bool?>.from(e['presence'])
+                        : [null, null, null, null, null, null],
+                      presenceColors: (e['presenceColors'] is List)
+                        ? List<Color>.from(e['presenceColors'])
+                        : [Colors.orange, Colors.orange, Colors.orange, Colors.orange, Colors.orange, Colors.orange],
                     ),
               ],
             ),
@@ -746,4 +843,3 @@ class _HomeTab extends StatelessWidget {
     );
   }
 }
-

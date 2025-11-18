@@ -28,5 +28,14 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+
+	<!-- Autorisation accès réseau local pour pouvoir joindre des APIs sur le LAN (ex: 172.22.x.x:8000) -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Cette application nécessite l'accès au réseau local pour communiquer avec le serveur de l'école (API locale).</string>
+	<!-- Déclarer les services Bonjour que l'application pourrait explorer (ici HTTP) -->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+	</array>
 </dict>
 </plist>

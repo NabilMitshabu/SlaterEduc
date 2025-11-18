@@ -8,8 +8,9 @@ import 'package:flutter/material.dart';
 
 class _PresenceItem extends StatelessWidget {
   final String label;
-  final bool present;
-  const _PresenceItem({required this.label, required this.present});
+  final bool? present;
+  final Color color;
+  const _PresenceItem({required this.label, required this.present, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -18,8 +19,8 @@ class _PresenceItem extends StatelessWidget {
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Icon(
-          present ? Icons.check_circle : Icons.cancel,
-          color: present ? Colors.blue : Colors.red,
+          present == null ? Icons.radio_button_unchecked : (present! ? Icons.check_circle : Icons.cancel),
+          color: color,
         ),
       ],
     );
@@ -96,12 +97,14 @@ class _MessageItem extends StatelessWidget {
 class ChildCard extends StatelessWidget {
   final String name;
   final String level;
-  final List<bool> presence;
+  final List<bool?> presence;
+  final List<Color> presenceColors;
 
   const ChildCard({
     required this.name,
     required this.level,
     required this.presence,
+    required this.presenceColors,
   });
 
   @override
@@ -123,7 +126,6 @@ class ChildCard extends StatelessWidget {
               subtitle: Text(level),
               trailing: const Icon(Icons.arrow_forward),
             ),
-
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Align(
@@ -134,16 +136,16 @@ class ChildCard extends StatelessWidget {
                 ),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: List.generate(
                   presence.length,
-                      (index) => _PresenceItem(
+                  (index) => _PresenceItem(
                     label: ["L", "M", "M", "J", "V", "S"][index],
                     present: presence[index],
+                    color: presenceColors[index],
                   ),
                 ),
               ),
@@ -156,5 +158,3 @@ class ChildCard extends StatelessWidget {
 }
 
 // bottombar Navigation
-
-

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import 'package:slatereduc/services/app_colors.dart';
 
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 

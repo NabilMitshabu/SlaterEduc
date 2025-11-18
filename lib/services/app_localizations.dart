@@ -8,7 +8,7 @@ class AppLocalizations {
 
   static const _localizedValues = {
     'fr': {
-      'profile': 'Profil',
+        'profile': 'Profil',
       'general': 'Général',
       'settings': 'Logique',
       'notifications': 'Notifications',
