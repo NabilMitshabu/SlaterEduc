@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class PresenceService {
   final String baseUrl;
-  PresenceService({this.baseUrl = 'http://10.124.105.153:8000'});
+  PresenceService({this.baseUrl = 'http://192.168.1.70:8000'});
 
   Future<String?> _getToken() async {
     try {
