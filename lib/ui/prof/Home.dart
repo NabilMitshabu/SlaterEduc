@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:slatereduc/services/app_colors.dart';
 import 'SecondScreen.dart';
 
+
 class ProfHome extends StatelessWidget {
   const ProfHome({super.key});
 
@@ -66,6 +67,7 @@ class ProfHome extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
+
                       color: AppColors.surface(context),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3))],
