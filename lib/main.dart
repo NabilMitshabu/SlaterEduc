@@ -8,10 +8,21 @@ import 'package:slatereduc/services/app_colors.dart';
 import 'package:slatereduc/services/language_provider.dart';
 import 'package:slatereduc/services/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:slatereduc/services/api/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('fr_FR', null);
+
+  // debug: print stored auth keys to help diagnose missing token
+  try {
+    final auth = AuthService();
+    await auth.debugPrintStoredAuth();
+    final authOk = await auth.isAuthenticated();
+    print('DEBUG: main - isAuthenticated() -> $authOk');
+  } catch (e) {
+    print('DEBUG: main - unable to run auth debug: $e');
+  }
 
   // Initialisation synchrone du LanguageProvider avant runApp
   final languageProvider = await LanguageProvider.initialize();

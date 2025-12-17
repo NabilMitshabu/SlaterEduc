@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../services/auth_service.dart';
+import '../services/api/auth_service.dart';
 import 'package:slatereduc/services/app_colors.dart';
 
 class LoginPage extends StatefulWidget {
@@ -71,6 +71,14 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         nameController.text.trim(),
         passwordController.text,
       );
+      // debug: print stored auth after successful login
+      try {
+        await _authService.debugPrintStoredAuth();
+        final ok = await _authService.isAuthenticated();
+        print('DEBUG: LoginPage - post-login isAuthenticated -> $ok');
+      } catch (e) {
+        print('DEBUG: LoginPage - unable to run auth debug: $e');
+      }
       if (mounted) {
         // On passe la réponse complète au route /home pour qu'il puisse récupérer l'ID du parent
         GoRouter.of(context).go('/home', extra: response);

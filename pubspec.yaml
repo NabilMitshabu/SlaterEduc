@@ -35,6 +35,9 @@ dependencies:
   flutter_secure_storage: ^8.0.0
   smooth_page_indicator: ^1.1.0
   intl: ^0.20.2
+  record: ^6.0.0
+  path_provider: ^2.1.2
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

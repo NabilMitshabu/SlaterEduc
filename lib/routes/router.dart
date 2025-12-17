@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../connexion/login_page.dart';
 import '../ui/OnboardingPage.dart';
-import '../ui/parent/Home.dart';
+import '../ui/parent/home/Home.dart';
 import '../ui/prof/Home.dart';
 
 

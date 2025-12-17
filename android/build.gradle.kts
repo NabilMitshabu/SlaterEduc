@@ -1,3 +1,8 @@
+import com.android.build.gradle.AppExtension
+import com.android.build.gradle.LibraryExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.gradle.api.tasks.compile.JavaCompile
+
 allprojects {
     repositories {
         google()
@@ -5,44 +10,47 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
+// Déplacer le dossier build global
+val newBuildDir = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    val newSubprojectBuildDir = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-subprojects {
-    project.evaluationDependsOn(":app")
-}
 
-// Configure global Java/Kotlin compatibility and suppress obsolete-options warning
-subprojects {
-    // Apply to JavaCompile tasks (all modules/plugins)
-    tasks.withType(org.gradle.api.tasks.compile.JavaCompile::class.java).configureEach {
-        // Ensure source/target compatibility are set to Java 11
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
-        // Suppress the obsolete-options lint warning
-        options.compilerArgs.add("-Xlint:-options")
-    }
-
-    // Apply to Kotlin compile tasks (if Kotlin plugin is used)
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).configureEach {
-        kotlinOptions {
-            jvmTarget = "11"
-            // Optional: enable explicit API mode or other options if needed
+    // Force Java Toolchain 17 pour tous les modules Java (plugins inclus)
+    plugins.withId("java") {
+        extensions.configure<org.gradle.api.plugins.JavaPluginExtension>("java") {
+            toolchain {
+                languageVersion.set(org.gradle.jvm.toolchain.JavaLanguageVersion.of(17))
+            }
         }
     }
 
-    // If Gradle supports Java toolchains in your environment, prefer this (safe fallback when available)
-    plugins.withType(org.gradle.api.plugins.JavaPlugin::class.java) {
-        extensions.configure(org.gradle.api.plugins.JavaPluginExtension::class.java) {
-            toolchain {
-                languageVersion.set(org.gradle.jvm.toolchain.JavaLanguageVersion.of(11))
+    // Force Kotlin JVM target 17 pour tous les modules Kotlin
+    tasks.withType<KotlinCompile>().configureEach {
+        kotlinOptions.jvmTarget = "17"
+    }
+
+    tasks.withType<JavaCompile>().configureEach {
+        sourceCompatibility = JavaVersion.VERSION_17.toString()
+        targetCompatibility = JavaVersion.VERSION_17.toString()
+    }
+
+    plugins.withId("com.android.application") {
+        extensions.configure<AppExtension>("android") {
+            compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
+        }
+    }
+
+    plugins.withId("com.android.library") {
+        extensions.configure<LibraryExtension>("android") {
+            compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
             }
         }
     }
