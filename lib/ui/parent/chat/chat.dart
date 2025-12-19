@@ -9,8 +9,8 @@ import 'package:slatereduc/services/api/user_directory_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:slatereduc/services/auth/user_identity_helper.dart';
 import 'chat_avatar_helpers.dart';
-
-import 'dart:convert';
+import 'widgets/conversation_tile.dart';
+import 'package:slatereduc/ui/widgets/correspondent_name_widget.dart';
 import 'dart:async';
 
 class ChatListItem {
@@ -45,6 +45,68 @@ class _ChatTabState extends State<ChatTab> {
   bool _isLoading = true;
   List<dynamic> _conversations = [];
   String? _error;
+
+  Set<String> _readFamilyIdsFast() {
+    // best-effort sync placeholder: la vraie valeur sera récupérée en async dans _loadConversations / listener.
+    return <String>{};
+  }
+
+  /// Calcule une clé d'unicité "pair" robuste: tout id dans familyIds est traité comme "moi".
+  /// Ainsi, une même discussion avec PROF NEVILLE ne sera pas dupliquée si l'expéditeur est le parent ou l'enfant.
+  String _conversationPeerKey(Map<String, dynamic> conv, {required Set<String> familyIds}) {
+    try {
+      // 1) Essaie d'identifier l'autre participant via participants/messages/meta,
+      //    en considérant n'importe quel id de familyIds comme "moi".
+      String? other;
+
+      // participants
+      if (conv['participants'] is List) {
+        for (final p in (conv['participants'] as List)) {
+          if (p == null) continue;
+          final pid = p is String
+              ? p
+              : (p is Map ? (p['id'] ?? p['user_id'] ?? p['participant_id'] ?? p['idUser'])?.toString() : null);
+          if (pid == null || pid.isEmpty) continue;
+          if (!familyIds.contains(pid)) {
+            other = pid;
+            break;
+          }
+        }
+      }
+
+      // last message
+      if ((other == null || other.isEmpty) && conv['messages'] is List && (conv['messages'] as List).isNotEmpty) {
+        final last = Map<String, dynamic>.from(((conv['messages'] as List).last) as Map);
+        final s = (last['sender_id'] ?? last['senderId'])?.toString();
+        final r = (last['receiver_id'] ?? last['receiverId'])?.toString();
+        if (s != null && s.isNotEmpty && !familyIds.contains(s)) other = s;
+        if ((other == null || other.isEmpty) && r != null && r.isNotEmpty && !familyIds.contains(r)) other = r;
+      }
+
+      // meta fallback
+      if ((other == null || other.isEmpty) && conv['meta'] is Map) {
+        final meta = conv['meta'] as Map<String, dynamic>;
+        final pid = (meta['participant'] ?? meta['participant_id'] ?? meta['user_id'] ?? meta['remote_participant'])?.toString();
+        if (pid != null && pid.isNotEmpty && !familyIds.contains(pid)) other = pid;
+      }
+
+      if (other != null && other.isNotEmpty) {
+        return 'peer:$other';
+      }
+    } catch (_) {}
+
+    // Dernier recours: id conversation
+    final remoteId = (conv['id'] ?? conv['meta']?['remote_id'] ?? '').toString();
+    if (remoteId.isNotEmpty) return 'id:$remoteId';
+    return 'local:${conv['title'] ?? ''}';
+  }
+
+  Future<void> _cleanupLocalDuplicates(List<Map<String, dynamic>> convs, {required Set<String> familyIds}) async {
+    try {
+      // Nettoyage profond: fusionne les conversations dupliquées et leurs messages.
+      await _localService.mergeDuplicateConversationsByPeer(familyIds: familyIds);
+    } catch (_) {}
+  }
 
   String? _otherParticipantId(Map<String, dynamic> conv, {String? currentUserId}) {
     try {
@@ -179,11 +241,13 @@ class _ChatTabState extends State<ChatTab> {
     // subscribe to local conversation changes so UI updates immediately when data changes
     try {
       _localConvSub = _localService.conversationsStream.listen((convs) async {
-        // also try to resolve names for participants for display
+        // aussi essayer de résoudre les noms des participants pour l'affichage
         List<Map<String, dynamic>> updated = convs.cast<Map<String, dynamic>>();
         String? currentUserId;
+        Set<String> familyIds = <String>{};
         try {
           currentUserId = await _identity.getCurrentUserId();
+          familyIds = await _identity.getFamilyUserIds();
           if (currentUserId == null || currentUserId.isEmpty) {
             final prefs = await SharedPreferences.getInstance();
             currentUserId = prefs.getString('current_user_id') ?? prefs.getString('user_id') ?? prefs.getString('id');
@@ -199,18 +263,33 @@ class _ChatTabState extends State<ChatTab> {
             }
           }
         } catch (_) {}
-        setState(() {
-          _conversations = _dedupeConversations(updated, currentUserId: currentUserId);
-          _sortConversations();
-        });
+
+        // nettoyage local: supprime les doublons persistés (conserve le plus récent)
+        // (best effort, ne doit pas bloquer l'UI)
+        // ignore: unawaited_futures
+        _cleanupLocalDuplicates(updated, familyIds: familyIds);
+
+        // déduplication UI robuste en considérant parent+enfants comme "moi"
+        final Map<String, Map<String, dynamic>> keep = {};
+        final Set<String> meIds = familyIds.isNotEmpty
+            ? familyIds
+            : (currentUserId != null && currentUserId.isNotEmpty ? {currentUserId} : <String>{});
+
+        for (final c in updated) {
+          final key = _conversationPeerKey(c, familyIds: meIds);
+          final existing = keep[key];
+          if (existing == null) {
+            keep[key] = c;
+          } else {
+            final existingUpdated = _conversationUpdatedAt(existing);
+            final thisUpdated = _conversationUpdatedAt(c);
+            if (thisUpdated.isAfter(existingUpdated)) keep[key] = c;
+          }
+        }
+        _conversations = keep.values.toList();
+        _sortConversations();
       });
     } catch (_) {}
-  }
-
-  @override
-  void dispose() {
-    _localConvSub?.cancel();
-    super.dispose();
   }
 
   Future<void> _loadConversations() async {
@@ -221,6 +300,7 @@ class _ChatTabState extends State<ChatTab> {
     try {
       // resolve current user id centrally
       String? curId = await _identity.getCurrentUserId();
+      final familyIds = await _identity.getFamilyUserIds();
 
       final convs = await _messagingService.getConversations();
       if (convs.isEmpty) {
@@ -228,8 +308,22 @@ class _ChatTabState extends State<ChatTab> {
         if (curId != null && curId.isNotEmpty) {
           await _messagingService.buildLocalConversationsForUser(curId);
           final local = await _localService.getConversations();
+
+          await _cleanupLocalDuplicates(local, familyIds: familyIds.isNotEmpty ? familyIds : {curId});
+          final cleaned = await _localService.getConversations();
+
           setState(() {
-            _conversations = _dedupeConversations(local, currentUserId: curId);
+            final Map<String, Map<String, dynamic>> keep = {};
+            for (final c in cleaned) {
+              final key = _conversationPeerKey(c, familyIds: familyIds.isNotEmpty ? familyIds : {curId});
+              final existing = keep[key];
+              if (existing == null) {
+                keep[key] = c;
+              } else {
+                if (_conversationUpdatedAt(c).isAfter(_conversationUpdatedAt(existing))) keep[key] = c;
+              }
+            }
+            _conversations = keep.values.toList();
             _sortConversations();
           });
         } else {
@@ -255,8 +349,22 @@ class _ChatTabState extends State<ChatTab> {
           } catch (_) {}
         }
         final local = await _localService.getConversations();
+
+        await _cleanupLocalDuplicates(local, familyIds: familyIds.isNotEmpty ? familyIds : (curId != null && curId.isNotEmpty ? {curId} : <String>{}));
+        final cleaned = await _localService.getConversations();
+
         setState(() {
-          _conversations = _dedupeConversations(local, currentUserId: curId);
+          final Map<String, Map<String, dynamic>> keep = {};
+          for (final c in cleaned) {
+            final key = _conversationPeerKey(c, familyIds: familyIds.isNotEmpty ? familyIds : (curId != null && curId.isNotEmpty ? {curId} : <String>{}));
+            final existing = keep[key];
+            if (existing == null) {
+              keep[key] = c;
+            } else {
+              if (_conversationUpdatedAt(c).isAfter(_conversationUpdatedAt(existing))) keep[key] = c;
+            }
+          }
+          _conversations = keep.values.toList();
           _sortConversations();
         });
       }
@@ -474,17 +582,6 @@ class _ChatTabState extends State<ChatTab> {
     } catch (_) {}
   }
 
-  Widget _buildAvatar(Map<String, dynamic> conv) {
-    final title = _extractDisplayName(conv);
-    final avatarUrl = conv['meta']?['avatar']?.toString();
-    return buildContactAvatar(
-      context,
-      name: title.toString(),
-      avatarUrl: avatarUrl,
-      radius: 28,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -518,70 +615,49 @@ class _ChatTabState extends State<ChatTab> {
                   separatorBuilder: (context, index) => const Divider(indent: 70, endIndent: 15, thickness: 0.5),
                   itemBuilder: (context, index) {
                     final conv = _conversations[index] as Map<String, dynamic>;
-                    final title = _extractDisplayName(conv);
+                    // On ne peut pas résoudre sync ici; on utilisera null pour le rendu, puis vraie valeur au onTap.
+                    String? currentUserId;
+
+                    // Résolution uniforme du correspondant (nom + id)
+                    final correspondent = resolveCorrespondentFromConversation(conv, currentUserId: currentUserId);
+                    final title = correspondent.name;
                     final id = conv['id']?.toString();
                     final latest = _latestMessage(conv);
-                    final lastMessage = latest != null ? (latest['content'] ?? latest['message'] ?? '') : '';
+                    final lastMessage = latest != null ? (latest['content'] ?? latest['message'] ?? '').toString() : '';
                     final latestDateStr = latest != null ? (latest['updated_at'] ?? latest['created_at'])?.toString() : (conv['updated_at'] ?? conv['created_at'])?.toString();
                     final classe = _extractClasse(conv);
                     final timeStr = _formatConversationTime(latestDateStr);
                     final bool unread = isConversationUnread(conv, currentUserId: null);
-                    return ListTile(
-                      leading: _buildAvatar(conv),
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(child: Text(title.toString(), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.text(context)), overflow: TextOverflow.ellipsis)),
-                              Text(timeStr, style: TextStyle(fontSize: 12, color: Colors.grey)),
-                            ],
-                          ),
-                          if (classe != null) Padding(padding: const EdgeInsets.only(top: 2), child: Text(classe, style: TextStyle(fontSize: 12, color: Colors.grey[600]))),
-                        ],
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text(lastMessage.toString(), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[700])),
-                      ),
-                      trailing: unread
-                          ? Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: Colors.redAccent,
-                                shape: BoxShape.circle,
-                              ),
-                            )
-                          : null,
+
+                    return ConversationTile(
+                      title: title,
+                      subtitle: lastMessage,
+                      timeLabel: timeStr,
+                      unread: unread,
+                      avatarUrl: correspondent.avatarUrl,
+                      classe: classe,
                       onTap: () async {
-                        String? currentUserId;
+                        // Résout l'id utilisateur courant proprement
                         try {
-                          final prefs = await SharedPreferences.getInstance();
-                          currentUserId = prefs.getString('current_user_id') ?? prefs.getString('user_id') ?? prefs.getString('id');
-                          if ((currentUserId == null || currentUserId.isEmpty) && prefs.containsKey('user')) {
-                            final raw = prefs.getString('user');
-                            if (raw != null && raw.isNotEmpty) {
-                              try {
-                                final parsed = json.decode(raw);
-                                if (parsed is Map && parsed.containsKey('id')) {
-                                  currentUserId = parsed['id']?.toString();
-                                }
-                              } catch (e) {}
+                          currentUserId = await _identity.getCurrentUserId();
+                          if (currentUserId == null || currentUserId!.isEmpty) {
+                            final prefs = await SharedPreferences.getInstance();
+                            currentUserId = prefs.getString('current_user_id') ?? prefs.getString('user_id') ?? prefs.getString('id');
+                            if ((currentUserId == null || currentUserId!.isEmpty) && prefs.containsKey('user')) {
+                              currentUserId = tryExtractCurrentUserIdFromPrefsJson(prefs.getString('user')) ?? currentUserId;
                             }
                           }
-                        } catch (e) {}
+                        } catch (_) {}
 
-                        final otherId = _otherParticipantId(conv, currentUserId: currentUserId);
-                        // navigate with receiverUserId to guarantee sending to correct participant
+                        final otherId = resolveCorrespondentFromConversation(conv, currentUserId: currentUserId).otherUserId ?? _otherParticipantId(conv, currentUserId: currentUserId);
+
                         if (id != null) {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => ChatScreen(
-                                name: title.toString(),
-                                avatarUrl: 'https://randomuser.me/api/portraits/lego/1.jpg',
+                                name: title,
+                                avatarUrl: correspondent.avatarUrl ?? 'https://randomuser.me/api/portraits/lego/1.jpg',
                                 conversationId: id,
                                 currentUserId: currentUserId,
                                 receiverUserId: otherId,
@@ -591,14 +667,17 @@ class _ChatTabState extends State<ChatTab> {
                         }
                       },
                       onLongPress: () async {
-                        final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-                          title: const Text('Supprimer la conversation'),
-                          content: const Text('Voulez-vous vraiment supprimer cette conversation ? Cette action est irréversible.'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Annuler')),
-                            TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Supprimer', style: TextStyle(color: Colors.red))),
-                          ],
-                        ));
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Supprimer la conversation'),
+                            content: const Text('Voulez-vous vraiment supprimer cette conversation ? Cette action est irréversible.'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Annuler')),
+                              TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Supprimer', style: TextStyle(color: Colors.red))),
+                            ],
+                          ),
+                        );
                         if (confirm == true) {
                           await _deleteConversation(conv);
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Conversation supprimée')));

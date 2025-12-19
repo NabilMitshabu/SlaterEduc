@@ -127,6 +127,42 @@ class LocalMessagingService {
     return id;
   }
 
+  /// Crée une conversation locale de manière idempotente pour une paire de participants.
+  /// Si une conversation existe déjà dans l'index de paire, elle est retournée.
+  Future<String> createOrReuseLocalConversationForParticipants({
+    required String title,
+    required List<String> participants,
+    Map<String, dynamic>? meta,
+  }) async {
+    final normalized = participants.where((e) => e.trim().isNotEmpty).map((e) => e.trim()).toList();
+    if (normalized.length < 2) {
+      return createLocalConversation(title: title, meta: meta, participants: participants);
+    }
+
+    final existing = await findConversationIdForParticipants(normalized);
+    if (existing != null && existing.isNotEmpty) {
+      // Met à jour le meta/titre si nécessaire (best effort)
+      try {
+        if (meta != null) {
+          final convs = await getConversations();
+          final idx = convs.indexWhere((c) => (c['id']?.toString() ?? '') == existing);
+          if (idx >= 0) {
+            final updated = Map<String, dynamic>.from(convs[idx]);
+            updated['title'] ??= title;
+            final mergedMeta = Map<String, dynamic>.from((updated['meta'] as Map?) ?? {});
+            mergedMeta.addAll(meta);
+            updated['meta'] = mergedMeta;
+            convs[idx] = updated;
+            await saveConversations(convs);
+          }
+        }
+      } catch (_) {}
+      return existing;
+    }
+
+    return createLocalConversation(title: title, meta: meta, participants: participants);
+  }
+
   Future<List<Map<String, dynamic>>> getLocalMessages(String conversationId) async {
     final prefs = await SharedPreferences.getInstance();
     final key = 'local_messages:$conversationId';
@@ -224,6 +260,160 @@ class LocalMessagingService {
             })
         .toList();
     await saveLocalMessages(conversationId, mapped);
+  }
+
+  /// - Fusionne les messages locaux (local_messages:<id>) et les messages inclus dans conv['messages']
+  Future<void> mergeDuplicateConversationsByPeer({required Set<String> familyIds}) async {
+    if (familyIds.isEmpty) return;
+
+    String peerKey(Map<String, dynamic> conv) {
+      String? other;
+      try {
+        if (conv['participants'] is List) {
+          for (final p in (conv['participants'] as List)) {
+            if (p == null) continue;
+            final pid = p is String
+                ? p
+                : (p is Map ? (p['id'] ?? p['user_id'] ?? p['participant_id'] ?? p['idUser'])?.toString() : null);
+            if (pid == null || pid.isEmpty) continue;
+            if (!familyIds.contains(pid)) {
+              other = pid;
+              break;
+            }
+          }
+        }
+        if ((other == null || other.isEmpty) && conv['messages'] is List && (conv['messages'] as List).isNotEmpty) {
+          final last = Map<String, dynamic>.from(((conv['messages'] as List).last) as Map);
+          final s = (last['sender_id'] ?? last['senderId'])?.toString();
+          final r = (last['receiver_id'] ?? last['receiverId'])?.toString();
+          if (s != null && s.isNotEmpty && !familyIds.contains(s)) other = s;
+          if ((other == null || other.isEmpty) && r != null && r.isNotEmpty && !familyIds.contains(r)) other = r;
+        }
+        if ((other == null || other.isEmpty) && conv['meta'] is Map) {
+          final meta = conv['meta'] as Map;
+          for (final k in ['participant', 'participant_id', 'user_id', 'remote_participant']) {
+            final v = meta[k]?.toString();
+            if (v != null && v.isNotEmpty && !familyIds.contains(v)) {
+              other = v;
+              break;
+            }
+          }
+        }
+      } catch (_) {}
+      if (other != null && other.isNotEmpty) return 'peer:$other';
+      final id = (conv['id'] ?? conv['meta']?['remote_id'] ?? '').toString();
+      return id.isNotEmpty ? 'id:$id' : 'unknown';
+    }
+
+    DateTime updatedAt(Map<String, dynamic> conv) {
+      try {
+        DateTime fromIso(String? s) => DateTime.tryParse(s ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        // Prefer last message
+        if (conv['messages'] is List && (conv['messages'] as List).isNotEmpty) {
+          final msgs = List<Map<String, dynamic>>.from((conv['messages'] as List).map((e) => Map<String, dynamic>.from(e as Map)));
+          msgs.sort((a, b) => fromIso((a['updated_at'] ?? a['created_at'])?.toString()).compareTo(fromIso((b['updated_at'] ?? b['created_at'])?.toString())));
+          final last = msgs.last;
+          return fromIso((last['updated_at'] ?? last['created_at'])?.toString());
+        }
+        return fromIso((conv['updated_at'] ?? conv['created_at'])?.toString());
+      } catch (_) {
+        return DateTime.fromMillisecondsSinceEpoch(0);
+      }
+    }
+
+    final convs = await getConversations();
+    if (convs.length <= 1) return;
+
+    // group
+    final Map<String, List<Map<String, dynamic>>> groups = {};
+    for (final c in convs) {
+      final key = peerKey(c);
+      groups.putIfAbsent(key, () => <Map<String, dynamic>>[]).add(c);
+    }
+
+    bool changed = false;
+    final List<Map<String, dynamic>> result = [];
+
+    for (final entry in groups.entries) {
+      final list = entry.value;
+      if (list.length == 1) {
+        result.add(list.first);
+        continue;
+      }
+
+      // choose keeper
+      list.sort((a, b) => updatedAt(b).compareTo(updatedAt(a)));
+      final keeper = Map<String, dynamic>.from(list.first);
+      final keeperId = keeper['id']?.toString() ?? '';
+
+      // merge messages from all into keeper
+      final Map<String, Map<String, dynamic>> byMsgId = {};
+      Future<void> absorbMessagesFromConv(Map<String, dynamic> c) async {
+        // 1) embedded messages
+        try {
+          if (c['messages'] is List) {
+            for (final raw in (c['messages'] as List)) {
+              if (raw == null || raw is! Map) continue;
+              final m = Map<String, dynamic>.from(raw);
+              final key = (m['id'] ?? m['local_id'] ?? '${m['created_at']}-${m['content']}')?.toString();
+              if (key == null || key.isEmpty) continue;
+              byMsgId[key] = m;
+            }
+          }
+        } catch (_) {}
+        // 2) local messages store
+        try {
+          final cid = c['id']?.toString() ?? '';
+          if (cid.isEmpty) return;
+          final localMsgs = await getLocalMessages(cid);
+          for (final m in localMsgs) {
+            final key = (m['id'] ?? m['local_id'] ?? '${m['created_at']}-${m['content']}')?.toString();
+            if (key == null || key.isEmpty) continue;
+            byMsgId[key] = Map<String, dynamic>.from(m);
+          }
+        } catch (_) {}
+      }
+
+      for (final c in list) {
+        await absorbMessagesFromConv(c);
+      }
+
+      final merged = byMsgId.values.toList();
+      merged.sort((a, b) {
+        final da = DateTime.tryParse((a['updated_at'] ?? a['created_at'])?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final db = DateTime.tryParse((b['updated_at'] ?? b['created_at'])?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return da.compareTo(db);
+      });
+      keeper['messages'] = merged;
+      if (merged.isNotEmpty) {
+        keeper['created_at'] ??= merged.first['created_at']?.toString();
+        keeper['updated_at'] = (merged.last['updated_at'] ?? merged.last['created_at'])?.toString();
+      }
+
+      result.add(keeper);
+
+      // delete extras and their local messages
+      for (final extra in list.skip(1)) {
+        final extraId = extra['id']?.toString() ?? '';
+        if (extraId.isEmpty) continue;
+        changed = true;
+        if (extraId != keeperId) {
+          await deleteLocalMessages(extraId);
+          await _removeFromPairIndex(extraId);
+        }
+      }
+
+      // persist merged messages for keeper
+      if (keeperId.isNotEmpty) {
+        try {
+          await saveLocalMessages(keeperId, merged);
+        } catch (_) {}
+      }
+    }
+
+    if (changed) {
+      await saveConversations(result);
+    }
   }
 
   // Close controller when app shuts down (optional)

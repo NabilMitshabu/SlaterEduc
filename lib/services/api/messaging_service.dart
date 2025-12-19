@@ -304,6 +304,7 @@ class MessagingService {
       // Regrouper par paire triée
       final Map<String, List<MessageModel>> byPair = {};
       final Map<String, String> lastConvIdByPair = {};
+      final Map<String, DateTime> lastConvTsByPair = {};
       for (final m in received) {
         final s = m.senderId;
         final r = m.receiverId;
@@ -312,9 +313,10 @@ class MessagingService {
         byPair.putIfAbsent(key, () => <MessageModel>[]).add(m);
         // garder le dernier id_conversation observé (le plus récent l'emporte)
         if (m.idConversation.isNotEmpty) {
-          final prev = lastConvIdByPair[key];
-          if (prev == null || m.updatedAt.isAfter(received.firstWhere((x)=>x.idConversation==prev, orElse: ()=>m).updatedAt)) {
+          final prevTs = lastConvTsByPair[key];
+          if (prevTs == null || m.updatedAt.isAfter(prevTs)) {
             lastConvIdByPair[key] = m.idConversation;
+            lastConvTsByPair[key] = m.updatedAt;
           }
         }
       }

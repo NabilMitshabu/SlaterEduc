@@ -87,6 +87,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Timer? _presenceTimer;
   bool _presenceRefreshInProgress = false;
 
+  // Nouveau: rafraîchissement notifications
+  Timer? _notifTimer;
+  bool _notifRefreshInProgress = false;
+
   // Lance un timer qui recharge les présences périodiquement (quasi temps réel)
   void _startPresenceAutoRefresh() {
     _presenceTimer?.cancel();
@@ -109,6 +113,25 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _presenceTimer = null;
   }
 
+  void _startNotificationsAutoRefresh() {
+    _notifTimer?.cancel();
+    _notifTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      if (!mounted) return;
+      if (_notifRefreshInProgress) return;
+      _notifRefreshInProgress = true;
+      try {
+        await _loadNotifications();
+      } catch (_) {} finally {
+        _notifRefreshInProgress = false;
+      }
+    });
+  }
+
+  void _stopNotificationsAutoRefresh() {
+    _notifTimer?.cancel();
+    _notifTimer = null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -117,6 +140,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _loadAvatar();
     _loadEleves();
     _loadNotifications();
+    // démarrer refresh auto notifications
+    _startNotificationsAutoRefresh();
   }
 
   @override
@@ -361,6 +386,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _controller.removeListener(_onPageChanged);
     _controller.dispose();
     _stopPresenceAutoRefresh();
+    _stopNotificationsAutoRefresh();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

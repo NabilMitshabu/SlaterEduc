@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:slatereduc/services/app_colors.dart';
 import 'package:slatereduc/services/app_localizations.dart';
@@ -15,6 +17,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
   List<Map<String, dynamic>> _notifications = [];
   bool _loading = true;
   String? _error;
+
+  Timer? _autoTimer;
+  bool _refreshing = false;
 
   String _formatShortDate(dynamic raw) {
     if (raw == null) return '';
@@ -42,13 +47,41 @@ class _NotificationScreenState extends State<NotificationScreen> {
   void initState() {
     super.initState();
     _load();
+    _startAutoRefresh();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
+  @override
+  void dispose() {
+    _stopAutoRefresh();
+    super.dispose();
+  }
+
+  void _startAutoRefresh() {
+    _autoTimer?.cancel();
+    _autoTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      if (!mounted) return;
+      if (_refreshing) return;
+      _refreshing = true;
+      try {
+        await _load(silent: true);
+      } catch (_) {} finally {
+        _refreshing = false;
+      }
     });
+  }
+
+  void _stopAutoRefresh() {
+    _autoTimer?.cancel();
+    _autoTimer = null;
+  }
+
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       // Charger les notifications entrantes pour la famille (parent + enfants)
       final list = await _notificationService.getIncomingNotificationsForCurrentUser(
@@ -64,9 +97,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
         _notifications = [];
       });
     } finally {
-      setState(() {
-        _loading = false;
-      });
+      if (!silent) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 

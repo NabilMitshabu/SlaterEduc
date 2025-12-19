@@ -12,8 +12,10 @@ import 'package:slatereduc/services/api/messaging_service.dart';
 import 'package:slatereduc/services/api/local_messaging_service.dart';
 import 'package:slatereduc/models/message_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:slatereduc/ui/widgets/correspondent_name_widget.dart';
 
 import 'NewChatScreen.dart';
+import 'chat_avatar_helpers.dart';
 
 // Widget du chat fidèle au modèle fourni
 class ChatScreen extends StatefulWidget {
@@ -487,7 +489,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           final convs = await _localService.getConversations();
           final exists = convs.any((c) => c['id'] == widget.conversationId);
           if (!exists) {
-            await _localService.createLocalConversation(title: widget.name, meta: {'remote_id': widget.conversationId});
+            // crée de façon idempotente par paire (évite doublons "avec messages" vs "sans message")
+            final sender = senderId;
+            final receiver = receiverId;
+            final participants = <String>[];
+            if (sender.isNotEmpty) participants.add(sender);
+            if (receiver.isNotEmpty) participants.add(receiver);
+            await _localService.createOrReuseLocalConversationForParticipants(
+              title: widget.name,
+              meta: {'remote_id': widget.conversationId},
+              participants: participants,
+            );
           }
           // reload local messages into UI
           final local = await _localService.getLocalMessages(widget.conversationId ?? 'local-unknown');
@@ -649,7 +661,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         receiverId: receiverId,
         idConversation: widget.conversationId!,
         duration: _recordDuration,
-        clientMessageId: DateTime.now().millisecondsSinceEpoch.toString() + '-' + (senderId ?? ''),
+        clientMessageId: DateTime.now().millisecondsSinceEpoch.toString() + '-' + senderId,
         content: '',
       );
       setState(() {
@@ -878,7 +890,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 icon: Icon(Icons.arrow_back, color: AppColors.text(context)),
                 onPressed: () => Navigator.of(context).pop(),
               ),
-              Expanded(child: Center(child: _buildAppBarTitle(context, titleToShow))),
+              Expanded(child: Center(child: CorrespondentNameWidget(
+                userId: widget.receiverUserId,
+                fallbackName: widget.name,
+                bold: true,
+                fontSize: 18,
+              ))),
               const SizedBox(width: 48),
             ],
           ),
@@ -1143,26 +1160,22 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         final idx = convs.indexWhere((c) => (c['id']?.toString() ?? '') == widget.conversationId);
         if (idx >= 0) {
           final conv = Map<String, dynamic>.from(convs[idx]);
-          if (conv['meta'] is Map) {
-            final meta = conv['meta'] as Map<String, dynamic>;
-            // priorité absolue au nom du correspondant stocké en local (participant_name)
-            final participantName = meta['participant_name']?.toString().trim();
-            if (participantName != null && participantName.isNotEmpty) {
-              name = participantName;
-            } else {
-              final candidates = [meta['receiver_name'], meta['name'], meta['username'], meta['firstname']];
-              for (final c in candidates) {
-                if (c != null) {
-                  final v = c.toString().trim();
-                  if (v.isNotEmpty) { name = v; break; }
-                }
-              }
-            }
+
+          // On résout toujours le correspondant (et jamais le titre brut de la conversation)
+          final currentUserId = await _resolveCurrentUserId();
+          final correspondent = resolveCorrespondentFromConversation(conv, currentUserId: currentUserId);
+          if (correspondent.name.trim().isNotEmpty) {
+            name = correspondent.name;
           }
+
+          // si on peut, on met à jour _resolvedReceiverId pour l'envoi
+          _resolvedReceiverId = widget.receiverUserId ?? correspondent.otherUserId ?? _resolvedReceiverId;
         }
       }
       _resolvedTitle = name;
-    } catch (_) { _resolvedTitle = widget.name; }
+    } catch (_) {
+      _resolvedTitle = widget.name;
+    }
   }
 
   Future<void> _resolveAvatarUrl() async {
